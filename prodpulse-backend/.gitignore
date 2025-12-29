@@ -31,7 +31,7 @@ build/
 
 # Environment variables
 .env
-application-local.properties
+application.properties
 
 # IDE
 .idea/
