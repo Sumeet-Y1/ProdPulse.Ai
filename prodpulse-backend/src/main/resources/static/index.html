@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProdPulse.AI - Production System Doctor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 25%, #0f0f0f 50%, #1a0a0a 75%, #0a0a0a 100%);
+            position: relative;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 10, 10, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #dc2626, #991b1b);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #ef4444, #b91c1c);
+        }
+
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-card {
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Glow effects */
+        .glow-red {
+            box-shadow: 0 0 30px rgba(220, 38, 38, 0.4);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
+        }
+
+        /* Pulse animation */
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+
+        /* Floating animation */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 30%, #ffffff 60%, #fca5a5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Fade in animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .animate-fade-in-down {
+            animation: fadeInDown 0.8s ease-out forwards;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        /* Delay animations */
+        .delay-100 { animation-delay: 0.1s; opacity: 0; }
+        .delay-200 { animation-delay: 0.2s; opacity: 0; }
+        .delay-300 { animation-delay: 0.3s; opacity: 0; }
+        .delay-400 { animation-delay: 0.4s; opacity: 0; }
+        .delay-500 { animation-delay: 0.5s; opacity: 0; }
+
+        /* Typing indicator */
+        @keyframes typing {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        .typing-dot {
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        /* Button hover effect */
+        .btn-hover {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-hover::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-hover:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(220, 38, 38, 0.5);
+        }
+
+        /* Loading spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+    </style>
+</head>
+<body class="text-white">
+<!-- Three.js Canvas -->
+<div id="canvas-container"></div>
+
+<!-- Main Content -->
+<div class="content min-h-screen">
+    <!-- Header -->
+    <header class="animate-fade-in-down">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+            <div class="text-center">
+                <!-- Logo with pulse effect -->
+                <div class="flex justify-center mb-6 float">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-red-600 rounded-full opacity-40 pulse-ring"></div>
+                        <div class="relative w-20 h-20 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center glow-red">
+                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <h1 class="text-6xl md:text-7xl font-bold mb-4 gradient-text text-glow">
+                    ProdPulse.AI
+                </h1>
+                <p class="text-xl md:text-2xl text-slate-300 font-light mb-2">
+                    Your Production System Doctor
+                </p>
+                <p class="text-base text-slate-400 max-w-2xl mx-auto">
+                    AI-powered log analysis that diagnoses crashes before they escalate
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Analysis Section -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Input Panel -->
+            <div class="glass-card rounded-3xl p-8 animate-fade-in-up delay-100 hover:border-red-500/30 transition-all duration-300">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold flex items-center gap-3">
+                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        Input Logs
+                    </h2>
+                    <div class="flex items-center gap-2 text-sm text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Max 150 words
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <div class="relative mb-4">
+                        <textarea
+                                id="logInput"
+                                class="w-full h-80 bg-black/40 border border-gray-800 rounded-2xl p-6 text-white font-mono text-sm resize-none focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300"
+                                placeholder="Paste your production error logs here...
+
+Example:
+Error: connect ECONNREFUSED 127.0.0.1:5432
+at TCPConnectWrap.afterConnect
+PostgreSQL connection failed
+Database not responding on localhost..."></textarea>
+
+                    <!-- Word Counter Badge -->
+                    <div id="wordCounter" class="absolute bottom-4 right-6 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-gray-400 border border-gray-800">
+                        0 / 150 words
+                    </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <button id="analyzeBtn" class="btn-hover w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-4 px-8 rounded-2xl text-lg relative">
+                        <span class="relative z-10 flex items-center justify-center gap-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Analyze Logs
+                        </span>
+                </button>
+
+                <!-- Rate Limit Info -->
+                <div id="rateLimitInfo" class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-300 hidden">
+                    <span id="remainingRequests">--</span> analyses remaining today
+                </div>
+
+                <!-- Quick Tips -->
+                <div class="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p class="text-sm text-red-300 font-medium mb-2">💡 Pro Tips:</p>
+                    <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                        <li>Look for keywords: "Error", "Exception", "Failed", "FATAL"</li>
+                        <li>Include stack traces if available</li>
+                        <li>Add relevant environment details (Railway, Docker, etc.)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Output Panel -->
+            <div class="glass-card rounded-3xl p-8 animate-fade-in-up delay-200 hover:border-red-500/30 transition-all duration-300">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold flex items-center gap-3">
+                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        Diagnosis
+                    </h2>
+                </div>
+
+                <!-- Output Box -->
+                <div id="outputBox" class="h-80 bg-black/40 border border-gray-800 rounded-2xl p-6 overflow-y-auto">
+                    <!-- Placeholder -->
+                    <div id="placeholder" class="h-full flex flex-col items-center justify-center text-center">
+                        <div class="w-16 h-16 bg-gray-900/50 rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-gray-400 text-lg mb-2">Waiting for logs...</p>
+                        <p class="text-gray-500 text-sm max-w-xs">Paste your error logs and click "Analyze Logs" to get instant diagnosis</p>
+                    </div>
+
+                    <!-- Diagnosis Content (Hidden by default) -->
+                    <div id="diagnosisContent" class="hidden space-y-6">
+                        <!-- Will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex gap-3">
+                    <button id="copyBtn" class="hidden flex-1 bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        Copy
+                    </button>
+                    <button id="clearBtn" class="hidden flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="grid md:grid-cols-3 gap-6 mt-12 animate-fade-in-up delay-300">
+            <div class="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
+                <div class="text-4xl font-bold gradient-text mb-2">AI-Powered</div>
+                <div class="text-gray-400">Smart Diagnosis</div>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
+                <div class="text-4xl font-bold gradient-text mb-2">100%</div>
+                <div class="text-gray-400">Free for Devs</div>
+            </div>
+            <div class="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
+                <div class="text-4xl font-bold gradient-text mb-2">⚡</div>
+                <div class="text-gray-400">Instant Results</div>
+            </div>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 animate-fade-in-up delay-400">
+            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
+                <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Smart Analysis</h3>
+                <p class="text-sm text-gray-400">AI-powered diagnosis of production errors</p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
+                <div class="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Instant Results</h3>
+                <p class="text-sm text-gray-400">Get diagnosis in seconds, not hours</p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
+                <div class="w-12 h-12 bg-gradient-to-br from-white to-gray-300 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Fix Suggestions</h3>
+                <p class="text-sm text-gray-400">Actionable solutions for every error</p>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
+                <div class="w-12 h-12 bg-gradient-to-br from-red-400 to-gray-600 rounded-xl flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Secure & Private</h3>
+                <p class="text-sm text-gray-400">Your logs stay safe and confidential</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20 animate-fade-in delay-500">
+        <div class="text-center text-gray-400">
+            <p class="mb-2">Built with ❤️ for developers who've suffered through "it works on my machine"</p>
+            <p class="text-sm text-gray-500">Made by a dev who faced 35 prod crashes and said "never again"</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // ========================================
+    // CONFIGURATION
+    // ========================================
+    const API_BASE_URL = 'http://localhost:8080/api';  // Change to Railway URL when deployed
+
+    // ========================================
+    // THREE.JS SCENE SETUP
+    // ========================================
+    let scene, camera, renderer, particles;
+
+    function initThreeJS() {
+        const container = document.getElementById('canvas-container');
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 50;
+
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const geometry = new THREE.BufferGeometry();
+        const particleCount = 1000;
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 200;
+            positions[i + 1] = (Math.random() - 0.5) * 200;
+            positions[i + 2] = (Math.random() - 0.5) * 200;
+
+            const rand = Math.random();
+            if (rand > 0.7) {
+                colors[i] = 1;
+                colors[i + 1] = 1;
+                colors[i + 2] = 1;
+            } else {
+                colors[i] = 1;
+                colors[i + 1] = Math.random() * 0.2;
+                colors[i + 2] = Math.random() * 0.2;
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 2,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+
+        particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        particles.rotation.x += 0.0002;
+        particles.rotation.y += 0.0003;
+
+        const mouseX = (window.innerWidth / 2);
+        const mouseY = (window.innerHeight / 2);
+
+        camera.position.x += (mouseX / 1000 - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY / 1000 - camera.position.y) * 0.05;
+        camera.lookAt(scene.position);
+
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    initThreeJS();
+
+    // ========================================
+    // DOM ELEMENTS
+    // ========================================
+    const logInput = document.getElementById('logInput');
+    const wordCounter = document.getElementById('wordCounter');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const outputBox = document.getElementById('outputBox');
+    const placeholder = document.getElementById('placeholder');
+    const diagnosisContent = document.getElementById('diagnosisContent');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const rateLimitInfo = document.getElementById('rateLimitInfo');
+    const remainingRequests = document.getElementById('remainingRequests');
+
+    // ========================================
+    // WORD COUNTER
+    // ========================================
+    logInput.addEventListener('input', function() {
+        const text = this.value.trim();
+        const words = text === '' ? 0 : text.split(/\s+/).length;
+
+        wordCounter.textContent = `${words} / 150 words`;
+
+        if (words > 150) {
+            wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-red-500/20 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-red-400 border border-red-500/50';
+        } else if (words > 120) {
+            wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-yellow-500/20 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-yellow-400 border border-yellow-500/50';
+        } else {
+            wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-gray-400 border border-gray-800';
+        }
+    });
+
+    // ========================================
+    // FETCH RATE LIMIT STATUS ON LOAD
+    // ========================================
+    async function fetchRateLimitStatus() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/rate-limit-status`);
+            if (response.ok) {
+                const data = await response.json();
+                remainingRequests.textContent = data.remainingRequests;
+                rateLimitInfo.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.log('Could not fetch rate limit status');
+        }
+    }
+
+    fetchRateLimitStatus();
+
+    // ========================================
+    // ANALYZE LOGS
+    // ========================================
+    analyzeBtn.addEventListener('click', async function() {
+        const text = logInput.value.trim();
+        const wordCount = text === '' ? 0 : text.split(/\s+/).length;
+
+        if (!text) {
+            showDiagnosis('warning', '⚠️ No Input', '<p class="text-gray-300">Please paste your production logs first.</p>');
+            return;
+        }
+
+        if (wordCount > 150) {
+            showDiagnosis('error', '🚫 Word Limit Exceeded', `<p class="text-gray-300">Your log paste is <strong>${wordCount} words</strong>. Please keep it under 150 words.</p><p class="text-gray-400 mt-4 text-sm">💡 <em>Tip: Extract just the error section - look for keywords like "Error", "Exception", "Failed", or "FATAL"</em></p>`);
+            return;
+        }
+
+        // Show loading state
+        analyzeBtn.innerHTML = `
+            <span class="relative z-10 flex items-center justify-center gap-3">
+                <div class="flex gap-1">
+                    <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
+                </div>
+                Analyzing...
+            </span>
+        `;
+        analyzeBtn.disabled = true;
+
+        try {
+            // Call backend API
+            const response = await fetch(`${API_BASE_URL}/analyze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    logs: text
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Analysis failed');
+            }
+
+            const data = await response.json();
+
+            // Show diagnosis
+            showDiagnosis(data.severity, data.title, data.content);
+
+            // Update rate limit
+            fetchRateLimitStatus();
+
+            // Show action buttons
+            copyBtn.classList.remove('hidden');
+            clearBtn.classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Error:', error);
+
+            if (error.message.includes('Rate limit')) {
+                showDiagnosis('error', '⚠️ Rate Limit Exceeded', `<p class="text-gray-300">${error.message}</p><p class="text-gray-400 mt-4">Please try again later or upgrade to Pro tier for unlimited access.</p>`);
+            } else {
+                showDiagnosis('error', '❌ Analysis Failed', `<p class="text-gray-300">Unable to analyze logs at this time.</p><p class="text-gray-400 mt-4 text-sm">Error: ${error.message}</p><p class="text-gray-400 mt-2 text-sm">Make sure your backend is running at ${API_BASE_URL}</p>`);
+            }
+        } finally {
+            // Reset button
+            analyzeBtn.innerHTML = `
+                <span class="relative z-10 flex items-center justify-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Analyze Logs
+                </span>
+            `;
+            analyzeBtn.disabled = false;
+        }
+    });
+
+    // ========================================
+    // SHOW DIAGNOSIS
+    // ========================================
+    function showDiagnosis(severity, title, content) {
+        placeholder.classList.add('hidden');
+        diagnosisContent.classList.remove('hidden');
+
+        let badgeClass, badgeText;
+
+        if (severity === 'critical') {
+            badgeClass = 'bg-red-500/20 text-red-400 border-red-500/50';
+            badgeText = '🔴 Critical';
+        } else if (severity === 'warning') {
+            badgeClass = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+            badgeText = '⚠️ Warning';
+        } else if (severity === 'error') {
+            badgeClass = 'bg-red-500/20 text-red-400 border-red-500/50';
+            badgeText = '❌ Error';
+        } else {
+            badgeClass = 'bg-blue-500/20 text-blue-400 border-blue-500/50';
+            badgeText = 'ℹ️ Info';
+        }
+
+        diagnosisContent.innerHTML = `
+            <div class="flex items-center gap-3 pb-4 border-b border-gray-800">
+                <span class="px-4 py-2 rounded-lg font-semibold text-sm ${badgeClass} border">
+                    ${badgeText}
+                </span>
+                <span class="text-gray-300 font-medium">${title}</span>
+            </div>
+            <div class="text-gray-300 leading-relaxed diagnosis-html">
+                ${content}
+            </div>
+        `;
+
+        outputBox.scrollTop = 0;
+    }
+
+    // ========================================
+    // COPY BUTTON
+    // ========================================
+    copyBtn.addEventListener('click', function() {
+        const text = diagnosisContent.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            copyBtn.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Copied!
+            `;
+            setTimeout(() => {
+                copyBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    Copy
+                `;
+            }, 2000);
+        });
+    });
+
+    // ========================================
+    // CLEAR BUTTON
+    // ========================================
+    clearBtn.addEventListener('click', function() {
+        logInput.value = '';
+        wordCounter.textContent = '0 / 150 words';
+        wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-gray-400 border border-gray-800';
+
+        diagnosisContent.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        copyBtn.classList.add('hidden');
+        clearBtn.classList.add('hidden');
+    });
+
+    // ========================================
+    // KEYBOARD SHORTCUT (Ctrl/Cmd + Enter)
+    // ========================================
+    logInput.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            analyzeBtn.click();
+        }
+    });
+</script>
+</body>
+</html>
