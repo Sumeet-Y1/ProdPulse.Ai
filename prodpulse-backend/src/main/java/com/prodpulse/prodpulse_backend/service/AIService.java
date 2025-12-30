@@ -1,11 +1,13 @@
 package com.prodpulse.prodpulse_backend.service;
 
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -21,6 +23,18 @@ public class AIService {
 
     @Autowired
     private ChatClient.Builder chatClientBuilder;
+
+    @Value("${spring.ai.google.genai.api-key}")
+    private String apiKey;
+
+    @PostConstruct
+    public void init() {
+        logger.info("=== GEMINI API KEY DEBUG ===");
+        logger.info("API Key present: {}", (apiKey != null && !apiKey.equals("NOT_SET") && apiKey.length() > 10));
+        logger.info("API Key length: {}", (apiKey != null ? apiKey.length() : 0));
+        logger.info("Starts with AIza: {}", (apiKey != null && apiKey.startsWith("AIza")));
+        logger.info("===========================");
+    }
 
     /**
      * System prompt for Gemini - defines how AI should analyze logs
