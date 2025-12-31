@@ -1,27 +1,20 @@
-# Java 21 (official & stable)
-FROM eclipse-temurin:21-jdk-jammy
+# Java 21 base image
+FROM openjdk:21-jdk-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper & pom
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+# Copy everything from root directory (Render root = prodpulse-backend)
+COPY . .
 
-# Give execute permission
+# Give permission to mvnw
 RUN chmod +x mvnw
 
-# Download dependencies (cache layer)
-RUN ./mvnw dependency:go-offline
-
-# Copy source
-COPY src ./src
-
-# Build app
+# Build the application
 RUN ./mvnw clean package -DskipTests
 
-# Expose app port
+# Expose Spring Boot port
 EXPOSE 8080
 
-# Run app
-CMD ["sh", "-c", "java -jar target/*.jar"]
+# Run the application
+CMD ["java", "-jar", "target/*.jar"]
