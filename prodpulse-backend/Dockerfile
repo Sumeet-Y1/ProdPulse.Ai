@@ -1,12 +1,15 @@
-# Use official Eclipse Temurin JDK 21 (guaranteed to exist)
+# Use official Eclipse Temurin JDK 21
 FROM eclipse-temurin:21-jdk
 
-# Set working directory inside container
+# Set working directory
 WORKDIR /app
 
 # Copy Maven wrapper and pom.xml first
 COPY mvnw pom.xml ./
 COPY .mvn/ .mvn/
+
+# Make mvnw executable
+RUN chmod +x mvnw
 
 # Download dependencies offline
 RUN ./mvnw dependency:go-offline -B
