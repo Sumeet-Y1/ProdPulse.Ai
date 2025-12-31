@@ -1,5 +1,5 @@
-# Use official Adoptium Java 21 JDK (guaranteed to exist)
-FROM ghcr.io/adoptium/temurin:21-jdk
+# Use official OpenJDK 21 from Docker Hub (public, no auth)
+FROM openjdk:21
 
 # Set working directory inside container
 WORKDIR /app
