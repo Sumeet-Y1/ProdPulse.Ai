@@ -1,5 +1,5 @@
-# Use official OpenJDK 21 from Docker Hub (public, no auth)
-FROM openjdk:21
+# Use official Eclipse Temurin JDK 21 (guaranteed to exist)
+FROM eclipse-temurin:21-jdk
 
 # Set working directory inside container
 WORKDIR /app
