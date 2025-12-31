@@ -1,24 +1,27 @@
-# Use Java 21
-FROM openjdk:21-jdk-slim
+# Java 21 (official & stable)
+FROM eclipse-temurin:21-jdk-jammy
 
 # Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml
+# Copy Maven wrapper & pom
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
 
-# Download dependencies
+# Give execute permission
+RUN chmod +x mvnw
+
+# Download dependencies (cache layer)
 RUN ./mvnw dependency:go-offline
 
-# Copy source code
+# Copy source
 COPY src ./src
 
-# Build the application
+# Build app
 RUN ./mvnw clean package -DskipTests
 
-# Expose port
+# Expose app port
 EXPOSE 8080
 
-# Run the jar file (wildcard finds any jar)
+# Run app
 CMD ["sh", "-c", "java -jar target/*.jar"]
