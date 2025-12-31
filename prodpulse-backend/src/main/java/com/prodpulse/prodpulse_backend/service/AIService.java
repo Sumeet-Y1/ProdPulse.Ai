@@ -3,36 +3,58 @@ package com.prodpulse.prodpulse_backend.service;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import java.util.List;
 
+/**
+ * Service for interacting with Groq AI
+ * Handles log analysis using Groq's LLaMA models via OpenAI-compatible API
+ */
 @Service
 public class AIService {
 
     private static final Logger logger = LoggerFactory.getLogger(AIService.class);
 
-    // CHANGED: Inject ChatClient directly instead of Builder
     @Autowired
-    private ChatClient chatClient;
+    private OpenAiChatModel chatModel;
 
-    @Value("${spring.ai.google.genai.api-key}")
+    @Value("${spring.ai.openai.api-key}")
     private String apiKey;
+
+    @Value("${spring.ai.openai.chat.options.model:llama-3.3-70b-versatile}")
+    private String modelName;
+
+    @Value("${spring.ai.openai.chat.options.temperature:0.3}")
+    private Double temperature;
+
+    @Value("${spring.ai.openai.chat.options.max-tokens:2000}")
+    private Integer maxTokens;
 
     @PostConstruct
     public void init() {
-        logger.info("=== GEMINI API KEY DEBUG ===");
+        logger.info("=== GROQ API CONFIGURATION ===");
         logger.info("API Key present: {}", (apiKey != null && !apiKey.equals("NOT_SET") && apiKey.length() > 10));
         logger.info("API Key length: {}", (apiKey != null ? apiKey.length() : 0));
-        logger.info("Starts with AIza: {}", (apiKey != null && apiKey.startsWith("AIza")));
-        logger.info("===========================");
+        logger.info("Model: {}", modelName);
+        logger.info("Temperature: {}", temperature);
+        logger.info("Max Tokens: {}", maxTokens);
+        logger.info("Base URL: https://api.groq.com/openai/v1");
+        logger.info("Starts with gsk_: {}", (apiKey != null && apiKey.startsWith("gsk_")));
+        logger.info("==============================");
     }
 
+    /**
+     * System prompt for Groq - defines how AI should analyze logs
+     */
     private static final String SYSTEM_PROMPT = """
             You are ProdPulse.AI, an expert production error diagnostic system.
             You specialize in analyzing error logs from production environments,
@@ -76,38 +98,63 @@ public class AIService {
             Keep explanations clear and actionable. Avoid jargon when possible.
             """;
 
+    /**
+     * Analyze production error logs using Groq AI
+     *
+     * @param errorLog The error log text to analyze
+     * @return AI-generated diagnosis in HTML format
+     */
     public String analyzeLog(String errorLog) {
-        logger.info("Starting log analysis with Google Gemini");
+        logger.info("Starting log analysis with Groq AI ({})", modelName);
 
         try {
-            // CHANGED: Use injected chatClient directly (no .build())
-            String userPrompt = """
-                    Analyze this production error log and provide diagnosis:
-                    
-                    {errorLog}
-                    
-                    Remember to format your response as HTML as specified in the system instructions.
-                    """;
+            // Create the full prompt with system instructions and user input
+            String fullPrompt = SYSTEM_PROMPT + "\n\nAnalyze this production error log and provide diagnosis:\n\n"
+                    + errorLog
+                    + "\n\nRemember to format your response as HTML as specified in the system instructions.";
 
-            PromptTemplate promptTemplate = new PromptTemplate(SYSTEM_PROMPT + "\n\n" + userPrompt);
-            Prompt prompt = promptTemplate.create(Map.of("errorLog", errorLog));
+            // Create user message
+            UserMessage userMessage = new UserMessage(fullPrompt);
 
-            logger.debug("Calling Google Gemini API (NO RETRY)...");
-            String response = chatClient.prompt(prompt).call().content();
+            // Create chat options for Groq
+            OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
+                    .model(modelName)
+                    .temperature(temperature)
+                    .maxTokens(maxTokens)
+                    .build();
 
-            logger.info("Successfully received diagnosis from Gemini");
-            return response;
+            // Create prompt with options
+            Prompt prompt = new Prompt(List.of(userMessage), chatOptions);
+
+            // Call Groq API (via OpenAI-compatible endpoint)
+            logger.debug("Calling Groq API with model: {}", modelName);
+            ChatResponse response = chatModel.call(prompt);
+
+            // For Spring AI 1.1.2: Access the content field directly
+            AssistantMessage message = response.getResult().getOutput();
+            String diagnosis = message.getText();
+
+            logger.info("Successfully received diagnosis from Groq AI");
+            return diagnosis;
 
         } catch (Exception e) {
-            logger.error("Error calling Google Gemini API: {}", e.getMessage());
-            // Don't log full stack trace to avoid noise
+            logger.error("Error calling Groq API: {}", e.getMessage(), e);
+
+            // Fallback response if AI fails
             return generateFallbackResponse(errorLog);
         }
     }
 
+    /**
+     * Determine severity level from error log
+     *
+     * @param errorLog The error log text
+     * @return Severity level: "critical", "warning", or "info"
+     */
     public String determineSeverity(String errorLog) {
         String logLower = errorLog.toLowerCase();
 
+        // Critical errors
         if (logLower.contains("fatal") ||
                 logLower.contains("outofmemoryerror") ||
                 logLower.contains("cannot connect") ||
@@ -117,6 +164,7 @@ public class AIService {
             return "critical";
         }
 
+        // Warning level
         if (logLower.contains("error") ||
                 logLower.contains("exception") ||
                 logLower.contains("failed") ||
@@ -124,15 +172,24 @@ public class AIService {
             return "warning";
         }
 
+        // Info level
         return "info";
     }
 
+    /**
+     * Extract title from error log (first error line or summary)
+     *
+     * @param errorLog The error log text
+     * @return Brief title for the error
+     */
     public String extractTitle(String errorLog) {
         String[] lines = errorLog.split("\n");
 
+        // Find first line with "Error" or "Exception"
         for (String line : lines) {
             if (line.toLowerCase().contains("error") ||
                     line.toLowerCase().contains("exception")) {
+                // Clean up and limit length
                 String title = line.trim();
                 if (title.length() > 100) {
                     title = title.substring(0, 97) + "...";
@@ -141,6 +198,7 @@ public class AIService {
             }
         }
 
+        // Fallback: use first non-empty line
         for (String line : lines) {
             String trimmed = line.trim();
             if (!trimmed.isEmpty()) {
@@ -154,6 +212,12 @@ public class AIService {
         return "Production Error Analysis";
     }
 
+    /**
+     * Generate fallback response if AI service fails
+     *
+     * @param errorLog The error log text
+     * @return Basic HTML diagnosis
+     */
     private String generateFallbackResponse(String errorLog) {
         logger.warn("Generating fallback response (AI service unavailable)");
 
