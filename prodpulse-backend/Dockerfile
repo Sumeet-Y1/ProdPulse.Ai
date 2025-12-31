@@ -1,20 +1,24 @@
-# Java 21 base image
-FROM openjdk:21-jdk-slim
+# Use official OpenJDK 21 from Eclipse Temurin (works on Render)
+FROM eclipse-temurin:21-jdk-focal
 
-# Set working directory
+# Set working directory inside container
 WORKDIR /app
 
-# Copy everything from root directory (Render root = prodpulse-backend)
-COPY . .
+# Copy Maven wrapper and pom.xml first (for dependency caching)
+COPY mvnw pom.xml ./
+COPY .mvn/ .mvn/
 
-# Give permission to mvnw
-RUN chmod +x mvnw
+# Download dependencies only
+RUN ./mvnw dependency:go-offline -B
 
-# Build the application
-RUN ./mvnw clean package -DskipTests
+# Copy the source code
+COPY src ./src
 
-# Expose Spring Boot port
+# Build the project and skip tests for faster builds
+RUN ./mvnw clean package -DskipTests -B
+
+# Expose the port your app will run on
 EXPOSE 8080
 
-# Run the application
-CMD ["java", "-jar", "target/*.jar"]
+# Run the jar file (any jar in target folder)
+CMD ["sh", "-c", "java -jar target/*.jar"]
