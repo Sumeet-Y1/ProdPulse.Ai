@@ -1,27 +1,31 @@
-# Use official Eclipse Temurin Java 21 JDK
-FROM eclipse-temurin:21-jdk
+# Stage 1: Build the JAR using Maven
+FROM maven:3.9.12-eclipse-temurin-21 AS build
 
 # Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml first
-COPY mvnw pom.xml ./
-COPY .mvn/ .mvn/
+# Copy pom.xml first (for caching dependencies)
+COPY pom.xml .
 
-# Give execution permission to Maven wrapper
-RUN chmod +x mvnw
+# Download dependencies
+RUN mvn dependency:go-offline -B
 
-# Download dependencies offline
-RUN ./mvnw dependency:go-offline -B
-
-# Copy the source code
+# Copy all source code
 COPY src ./src
 
-# Build the project and skip tests
-RUN ./mvnw clean package -DskipTests -B
+# Package the application without running tests
+RUN mvn clean package -DskipTests
 
-# Expose the port your Spring Boot app uses
+# Stage 2: Run the app
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+
+# Copy the jar from the build stage
+COPY --from=build /app/target/prodpulse-backend-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose port
 EXPOSE 8080
 
-# Run the built jar with exact name
-CMD ["java", "-jar", "target/prodpulse-backend-0.0.1-SNAPSHOT.jar"]
+# Run the jar
+ENTRYPOINT ["java","-jar","app.jar"]
