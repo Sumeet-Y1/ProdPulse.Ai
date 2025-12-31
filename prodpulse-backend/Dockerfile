@@ -1,5 +1,5 @@
-# Use official OpenJDK 21 (slim, guaranteed to exist)
-FROM openjdk:21-slim
+# Use official OpenJDK 21 (guaranteed to exist)
+FROM openjdk:21-jdk
 
 # Set working directory
 WORKDIR /app
