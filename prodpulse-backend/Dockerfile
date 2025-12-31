@@ -1,24 +1,24 @@
-# Use official OpenJDK 21 from Eclipse Temurin (works on Render)
-FROM eclipse-temurin:21-jdk-focal
+# Use official OpenJDK 21 (slim, guaranteed to exist)
+FROM openjdk:21-slim
 
-# Set working directory inside container
+# Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml first (for dependency caching)
+# Copy Maven wrapper and pom.xml first
 COPY mvnw pom.xml ./
 COPY .mvn/ .mvn/
 
-# Download dependencies only
+# Download dependencies offline
 RUN ./mvnw dependency:go-offline -B
 
-# Copy the source code
+# Copy source code
 COPY src ./src
 
-# Build the project and skip tests for faster builds
+# Build the project and skip tests
 RUN ./mvnw clean package -DskipTests -B
 
-# Expose the port your app will run on
+# Expose the port
 EXPOSE 8080
 
-# Run the jar file (any jar in target folder)
+# Run the jar file
 CMD ["sh", "-c", "java -jar target/*.jar"]
