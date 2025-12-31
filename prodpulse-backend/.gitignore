@@ -29,20 +29,13 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-# Environment variables
-.env
-application.properties
-/src/main/resources/application.properties
-
-
-# IDE
-.idea/
-*.iml
+### VS Code ###
 .vscode/
 
-# Build
-target/
-*.class
+# Environment variables and sensitive configs
+.env
+src/main/resources/application.properties
+application.properties
 
 # Logs
 *.log
@@ -50,8 +43,3 @@ target/
 # OS
 .DS_Store
 Thumbs.db
-
-
-
-### VS Code ###
-.vscode/
