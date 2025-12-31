@@ -368,10 +368,10 @@ Contributions are welcome! Please follow these steps:
 
 **Your Name**
 
-- GitHub: [@yourusername](https://github.com/Sumeet-Y1)
-- LinkedIn: [Your Name](https://www.linkedin.com/in/sumeet-backenddev/)
-- Website: [yourwebsite.com](sumeetdev.netlify.app/)
-- Email: (sumeety202@gmail.com)
+- GitHub: https://github.com/Sumeet-Y1
+- LinkedIn: https://www.linkedin.com/in/sumeet-backenddev/
+- Website: sumeetdev.netlify.app/
+- Email: sumeety202@gmail.com
 
 ---
 
