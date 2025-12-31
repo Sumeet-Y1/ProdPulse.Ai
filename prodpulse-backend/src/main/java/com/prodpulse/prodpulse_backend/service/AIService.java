@@ -12,17 +12,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-/**
- * Service for interacting with Google Gemini AI
- * Handles log analysis using Google GenAI (Gemini)
- */
 @Service
 public class AIService {
 
     private static final Logger logger = LoggerFactory.getLogger(AIService.class);
 
+    // CHANGED: Inject ChatClient directly instead of Builder
     @Autowired
-    private ChatClient.Builder chatClientBuilder;
+    private ChatClient chatClient;
 
     @Value("${spring.ai.google.genai.api-key}")
     private String apiKey;
@@ -36,9 +33,6 @@ public class AIService {
         logger.info("===========================");
     }
 
-    /**
-     * System prompt for Gemini - defines how AI should analyze logs
-     */
     private static final String SYSTEM_PROMPT = """
             You are ProdPulse.AI, an expert production error diagnostic system.
             You specialize in analyzing error logs from production environments,
@@ -82,20 +76,11 @@ public class AIService {
             Keep explanations clear and actionable. Avoid jargon when possible.
             """;
 
-    /**
-     * Analyze production error logs using Google Gemini
-     *
-     * @param errorLog The error log text to analyze
-     * @return AI-generated diagnosis in HTML format
-     */
     public String analyzeLog(String errorLog) {
         logger.info("Starting log analysis with Google Gemini");
 
         try {
-            // Create chat client
-            ChatClient chatClient = chatClientBuilder.build();
-
-            // Create user prompt with the error log
+            // CHANGED: Use injected chatClient directly (no .build())
             String userPrompt = """
                     Analyze this production error log and provide diagnosis:
                     
@@ -104,35 +89,25 @@ public class AIService {
                     Remember to format your response as HTML as specified in the system instructions.
                     """;
 
-            // Create prompt template
             PromptTemplate promptTemplate = new PromptTemplate(SYSTEM_PROMPT + "\n\n" + userPrompt);
             Prompt prompt = promptTemplate.create(Map.of("errorLog", errorLog));
 
-            // Call Gemini API
-            logger.debug("Calling Google Gemini API...");
+            logger.debug("Calling Google Gemini API (NO RETRY)...");
             String response = chatClient.prompt(prompt).call().content();
 
             logger.info("Successfully received diagnosis from Gemini");
             return response;
 
         } catch (Exception e) {
-            logger.error("Error calling Google Gemini API: {}", e.getMessage(), e);
-
-            // Fallback response if AI fails
+            logger.error("Error calling Google Gemini API: {}", e.getMessage());
+            // Don't log full stack trace to avoid noise
             return generateFallbackResponse(errorLog);
         }
     }
 
-    /**
-     * Determine severity level from error log
-     *
-     * @param errorLog The error log text
-     * @return Severity level: "critical", "warning", or "info"
-     */
     public String determineSeverity(String errorLog) {
         String logLower = errorLog.toLowerCase();
 
-        // Critical errors
         if (logLower.contains("fatal") ||
                 logLower.contains("outofmemoryerror") ||
                 logLower.contains("cannot connect") ||
@@ -142,7 +117,6 @@ public class AIService {
             return "critical";
         }
 
-        // Warning level
         if (logLower.contains("error") ||
                 logLower.contains("exception") ||
                 logLower.contains("failed") ||
@@ -150,24 +124,15 @@ public class AIService {
             return "warning";
         }
 
-        // Info level
         return "info";
     }
 
-    /**
-     * Extract title from error log (first error line or summary)
-     *
-     * @param errorLog The error log text
-     * @return Brief title for the error
-     */
     public String extractTitle(String errorLog) {
         String[] lines = errorLog.split("\n");
 
-        // Find first line with "Error" or "Exception"
         for (String line : lines) {
             if (line.toLowerCase().contains("error") ||
                     line.toLowerCase().contains("exception")) {
-                // Clean up and limit length
                 String title = line.trim();
                 if (title.length() > 100) {
                     title = title.substring(0, 97) + "...";
@@ -176,7 +141,6 @@ public class AIService {
             }
         }
 
-        // Fallback: use first non-empty line
         for (String line : lines) {
             String trimmed = line.trim();
             if (!trimmed.isEmpty()) {
@@ -190,12 +154,6 @@ public class AIService {
         return "Production Error Analysis";
     }
 
-    /**
-     * Generate fallback response if AI service fails
-     *
-     * @param errorLog The error log text
-     * @return Basic HTML diagnosis
-     */
     private String generateFallbackResponse(String errorLog) {
         logger.warn("Generating fallback response (AI service unavailable)");
 
