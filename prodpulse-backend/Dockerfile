@@ -1,4 +1,4 @@
-# Use official Eclipse Temurin JDK 21
+# Use official Eclipse Temurin Java 21 JDK
 FROM eclipse-temurin:21-jdk
 
 # Set working directory
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY mvnw pom.xml ./
 COPY .mvn/ .mvn/
 
-# Make mvnw executable
+# Give execution permission to Maven wrapper
 RUN chmod +x mvnw
 
 # Download dependencies offline
@@ -20,8 +20,8 @@ COPY src ./src
 # Build the project and skip tests
 RUN ./mvnw clean package -DskipTests -B
 
-# Expose the port your app runs on
+# Expose the port your Spring Boot app uses
 EXPOSE 8080
 
-# Run the built jar file
-CMD ["sh", "-c", "java -jar target/*.jar"]
+# Run the built jar with exact name
+CMD ["java", "-jar", "target/prodpulse-backend-0.0.1-SNAPSHOT.jar"]
