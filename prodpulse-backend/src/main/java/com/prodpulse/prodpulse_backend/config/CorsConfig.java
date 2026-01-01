@@ -17,7 +17,7 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    @Value("${cors.allowed-origins}")
+    @Value("${cors.allowed-origins:*}")
     private String allowedOrigins;
 
     /**
@@ -29,12 +29,20 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow credentials (cookies, authorization headers)
-        config.setAllowCredentials(true);
-
         // Set allowed origins from application.properties
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
-        config.setAllowedOrigins(origins);
+        if ("*".equals(allowedOrigins)) {
+            // Allow all origins if not specified
+            config.addAllowedOriginPattern("*");
+        } else {
+            // Set specific origins
+            List<String> origins = Arrays.asList(allowedOrigins.split(","));
+            config.setAllowedOrigins(origins);
+        }
+
+        // Allow credentials only if specific origins are set
+        if (!"*".equals(allowedOrigins)) {
+            config.setAllowCredentials(true);
+        }
 
         // Allow all headers
         config.addAllowedHeader("*");
