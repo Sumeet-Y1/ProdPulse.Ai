@@ -32,10 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
-# Environment variables and sensitive configs
-.env
-src/main/resources/application.properties
-application.properties
+
 
 # Logs
 *.log
