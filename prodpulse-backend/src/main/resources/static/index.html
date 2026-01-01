@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
             theme: {
                 extend: {
                     fontFamily: {
@@ -26,11 +27,58 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-main-dark: #050505;
+            --bg-main-light: #f8f9fa;
+            --bg-card-dark: rgba(17, 17, 17, 0.85);
+            --bg-card-light: rgba(255, 255, 255, 0.95);
+            --text-primary-dark: #f5f5f5;
+            --text-primary-light: #1a1a1a;
+            --text-secondary-dark: #a3a3a3;
+            --text-secondary-light: #6b7280;
+            --text-muted-dark: #71717a;
+            --text-muted-light: #9ca3af;
+            --border-dark: rgba(255, 255, 255, 0.12);
+            --border-light: rgba(0, 0, 0, 0.08);
+            --accent-dark: #f5f5f5;
+            --accent-light: #111111;
+            --shadow-dark: rgba(0, 0, 0, 0.45);
+            --shadow-light: rgba(0, 0, 0, 0.12);
+            --glass-dark: rgba(15, 15, 15, 0.85);
+            --glass-light: rgba(245, 245, 245, 0.95);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: var(--bg-main-dark);
+            --bg-card: var(--bg-card-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --text-muted: var(--text-muted-dark);
+            --border: var(--border-dark);
+            --accent: var(--accent-dark);
+            --shadow: var(--shadow-dark);
+            --glass: var(--glass-dark);
+        }
+
+        [data-theme="light"] {
+            --bg-main: var(--bg-main-light);
+            --bg-card: var(--bg-card-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --text-muted: var(--text-muted-light);
+            --border: var(--border-light);
+            --accent: var(--accent-light);
+            --shadow: var(--shadow-light);
+            --glass: var(--glass-light);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 25%, #0f0f0f 50%, #1a0a0a 75%, #0a0a0a 100%);
             position: relative;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
         #canvas-container {
@@ -50,136 +98,100 @@
 
         /* Custom scrollbar */
         ::-webkit-scrollbar {
-            width: 10px;
+            width: 6px;
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(10, 10, 10, 0.5);
+            background: rgba(0, 0, 0, 0.04);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #dc2626, #991b1b);
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #ef4444, #b91c1c);
+            background: rgba(0, 0, 0, 0.4);
         }
 
-        /* Glassmorphism effect */
+        /* Glassmorphism */
         .glass {
-            background: rgba(10, 10, 10, 0.8);
+            background: var(--glass);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
         }
 
         .glass-card {
-            background: rgba(20, 20, 20, 0.7);
+            background: var(--bg-card);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
         }
 
-        /* Glow effects */
-        .glow-red {
-            box-shadow: 0 0 30px rgba(220, 38, 38, 0.4);
+        /* Shadows */
+        .soft-shadow {
+            box-shadow: 0 20px 45px var(--shadow);
         }
 
-        .text-glow {
-            text-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
-        }
-
-        /* Pulse animation */
+        /* Pulse */
         @keyframes pulse-ring {
-            0% {
-                transform: scale(0.8);
-                opacity: 1;
+            0%, 100% {
+                transform: scale(0.95);
+                opacity: 0.8;
             }
             50% {
-                transform: scale(1.2);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(0.8);
-                opacity: 1;
+                transform: scale(1.1);
+                opacity: 0.3;
             }
         }
 
         .pulse-ring {
-            animation: pulse-ring 2s ease-in-out infinite;
+            animation: pulse-ring 3s ease-in-out infinite;
         }
 
-        /* Floating animation */
+        /* Float */
         @keyframes float {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-20px);
-            }
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
         }
 
         .float {
-            animation: float 3s ease-in-out infinite;
+            animation: float 4s ease-in-out infinite;
         }
 
         /* Gradient text */
         .gradient-text {
-            background: linear-gradient(135deg, #ef4444 0%, #f87171 30%, #ffffff 60%, #fca5a5 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, #cccccc 50%, var(--accent) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        /* Fade in animations */
+        /* Fade animations */
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .animate-fade-in-down { animation: fadeInDown 0.6s ease-out forwards; }
+        .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
 
-        .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
+        .delay-100 { animation-delay: 0.05s; opacity: 0; }
+        .delay-200 { animation-delay: 0.1s; opacity: 0; }
+        .delay-300 { animation-delay: 0.15s; opacity: 0; }
+        .delay-400 { animation-delay: 0.2s; opacity: 0; }
+        .delay-500 { animation-delay: 0.25s; opacity: 0; }
 
-        .animate-fade-in-down {
-            animation: fadeInDown 0.8s ease-out forwards;
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-
-        /* Delay animations */
-        .delay-100 { animation-delay: 0.1s; opacity: 0; }
-        .delay-200 { animation-delay: 0.2s; opacity: 0; }
-        .delay-300 { animation-delay: 0.3s; opacity: 0; }
-        .delay-400 { animation-delay: 0.4s; opacity: 0; }
-        .delay-500 { animation-delay: 0.5s; opacity: 0; }
-
-        /* Typing indicator */
+        /* Typing */
         @keyframes typing {
             0%, 100% { opacity: 0.2; }
             50% { opacity: 1; }
@@ -189,42 +201,17 @@
             animation: typing 1.4s infinite;
         }
 
-        .typing-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-        .typing-dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        /* Button hover effect */
+        /* Button hover */
         .btn-hover {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .btn-hover::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn-hover:hover::before {
-            width: 300px;
-            height: 300px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
 
         .btn-hover:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 40px rgba(220, 38, 38, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 40px var(--shadow);
         }
 
         /* Loading spinner */
@@ -234,16 +221,50 @@
 
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            border-top-color: white;
+            border-top-color: currentColor;
             animation: spin 0.8s linear infinite;
         }
+
+        /* Theme toggle */
+        .theme-toggle {
+            border-radius: 9999px;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--glass);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+
+        .theme-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Text utilities */
+        .text-primary { color: var(--text-primary); }
+        .text-secondary { color: var(--text-secondary); }
+        .text-muted { color: var(--text-muted); }
+        .bg-glass { background: var(--glass); }
+        .border-theme { border-color: var(--border); }
     </style>
 </head>
-<body class="text-white">
+<body>
 <!-- Three.js Canvas -->
 <div id="canvas-container"></div>
 
@@ -251,58 +272,75 @@
 <div class="content min-h-screen">
     <!-- Header -->
     <header class="animate-fade-in-down">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full border border-theme bg-glass flex items-center justify-center soft-shadow">
+                        <span class="text-xs tracking-[0.2em] uppercase font-semibold">PP</span>
+                    </div>
+                    <span class="text-xs text-secondary tracking-[0.25em] uppercase font-medium">ProdPulse.AI</span>
+                </div>
+
+                <!-- Theme Toggle -->
+                <button id="themeToggle" class="theme-toggle">
+                    <svg id="sunIcon" class="theme-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <path stroke-linecap="round" d="M12 2v2m0 18v-2m10-8h-2m-18 0H2m18-10l-2 2m0 18l-2 2m-18-10h2m18 0h-2M6 5l2 2m0 18l2 2M6 19l2-2m10 2l2-2m0-18l-2-2"></path>
+                    </svg>
+                    <svg id="moonIcon" class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 0111.21 3 7 7 0 0012 17a7 7 0 009-4.21z"></path>
+                    </svg>
+                    <span id="themeLabel">Night</span>
+                </button>
+            </div>
+
             <div class="text-center">
-                <!-- Logo with pulse effect -->
-                <div class="flex justify-center mb-6 float">
+                <div class="flex justify-center mb-4 float">
                     <div class="relative">
-                        <div class="absolute inset-0 bg-red-600 rounded-full opacity-40 pulse-ring"></div>
-                        <div class="relative w-20 h-20 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center glow-red">
-                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        <div class="absolute inset-0 bg-accent opacity-15 rounded-full pulse-ring"></div>
+                        <div class="relative w-16 h-16 bg-glass rounded-full flex items-center justify-center soft-shadow border border-theme">
+                            <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- Title -->
-                <h1 class="text-6xl md:text-7xl font-bold mb-4 gradient-text text-glow">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-3 gradient-text">
                     ProdPulse.AI
                 </h1>
-                <p class="text-xl md:text-2xl text-slate-300 font-light mb-2">
+                <p class="text-lg md:text-xl text-secondary font-light mb-2">
                     Your Production System Doctor
                 </p>
-                <p class="text-base text-slate-400 max-w-2xl mx-auto">
-                    AI-powered log analysis that diagnoses crashes before they escalate
+                <p class="text-sm md:text-base text-muted max-w-xl mx-auto leading-relaxed">
+                    AI-powered log analysis that diagnoses crashes before they escalate.
                 </p>
             </div>
         </div>
     </header>
 
-    <!-- Main Analysis Section -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid lg:grid-cols-2 gap-8">
+    <!-- Main Section -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="grid lg:grid-cols-2 gap-6">
             <!-- Input Panel -->
-            <div class="glass-card rounded-3xl p-8 animate-fade-in-up delay-100 hover:border-red-500/30 transition-all duration-300">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-semibold flex items-center gap-3">
-                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <div class="glass-card rounded-3xl p-6 lg:p-8 animate-fade-in-up delay-100 soft-shadow hover:border-accent/50 transition-all duration-200">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-xl font-semibold flex items-center gap-2.5">
+                        <div class="w-2.5 h-2.5 bg-accent rounded-full animate-pulse"></div>
                         Input Logs
                     </h2>
-                    <div class="flex items-center gap-2 text-sm text-gray-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <div class="flex items-center gap-2 text-xs text-secondary">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Max 150 words
                     </div>
                 </div>
 
-                <!-- Textarea -->
                 <div class="relative mb-4">
-                        <textarea
-                                id="logInput"
-                                class="w-full h-80 bg-black/40 border border-gray-800 rounded-2xl p-6 text-white font-mono text-sm resize-none focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all duration-300"
-                                placeholder="Paste your production error logs here...
+                    <textarea id="logInput"
+                              class="w-full h-72 lg:h-80 bg-glass border border-theme rounded-2xl p-5 text-sm resize-none focus:outline-none focus:border-accent/70 focus:ring-2 focus:ring-accent/30 transition-all duration-200 font-mono text-primary placeholder:text-muted"
+                              placeholder="Paste your production error logs here...
 
 Example:
 Error: connect ECONNREFUSED 127.0.0.1:5432
@@ -310,76 +348,69 @@ at TCPConnectWrap.afterConnect
 PostgreSQL connection failed
 Database not responding on localhost..."></textarea>
 
-                    <!-- Word Counter Badge -->
-                    <div id="wordCounter" class="absolute bottom-4 right-6 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-gray-400 border border-gray-800">
+                    <div id="wordCounter"
+                         class="absolute bottom-4 right-5 px-3.5 py-2 bg-glass backdrop-blur-sm rounded-xl text-xs font-mono font-medium text-secondary border border-theme">
                         0 / 150 words
                     </div>
                 </div>
 
-                <!-- Analyze Button -->
-                <button id="analyzeBtn" class="btn-hover w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold py-4 px-8 rounded-2xl text-lg relative">
-                        <span class="relative z-10 flex items-center justify-center gap-3">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            Analyze Logs
-                        </span>
+                <button id="analyzeBtn"
+                        class="btn-hover w-full bg-accent text-primary font-semibold py-4 px-6 rounded-2xl text-base relative flex items-center justify-center gap-2.5 shadow-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Analyze Logs
                 </button>
 
-                <!-- Rate Limit Info -->
-                <div id="rateLimitInfo" class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-300 hidden">
+                <div id="rateLimitInfo"
+                     class="mt-4 p-3 bg-accent/10 border border-accent/30 rounded-xl text-xs text-accent hidden">
                     <span id="remainingRequests">--</span> analyses remaining today
                 </div>
 
-                <!-- Quick Tips -->
-                <div class="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p class="text-sm text-red-300 font-medium mb-2">💡 Pro Tips:</p>
-                    <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                <div class="mt-6 p-4 bg-glass border border-theme rounded-xl">
+                    <p class="text-xs text-secondary font-medium mb-2">💡 Pro Tips:</p>
+                    <ul class="text-[11px] text-muted space-y-1.5 list-disc list-inside">
                         <li>Look for keywords: "Error", "Exception", "Failed", "FATAL"</li>
                         <li>Include stack traces if available</li>
-                        <li>Add relevant environment details (Railway, Docker, etc.)</li>
+                        <li>Add environment details (Railway, Docker, etc.)</li>
                     </ul>
                 </div>
             </div>
 
             <!-- Output Panel -->
-            <div class="glass-card rounded-3xl p-8 animate-fade-in-up delay-200 hover:border-red-500/30 transition-all duration-300">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-semibold flex items-center gap-3">
-                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <div class="glass-card rounded-3xl p-6 lg:p-8 animate-fade-in-up delay-200 soft-shadow hover:border-accent/50 transition-all duration-200">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-xl font-semibold flex items-center gap-2.5">
+                        <div class="w-2.5 h-2.5 bg-accent rounded-full animate-pulse"></div>
                         Diagnosis
                     </h2>
                 </div>
 
-                <!-- Output Box -->
-                <div id="outputBox" class="h-80 bg-black/40 border border-gray-800 rounded-2xl p-6 overflow-y-auto">
-                    <!-- Placeholder -->
+                <div id="outputBox" class="h-72 lg:h-80 bg-glass border border-theme rounded-2xl p-5 overflow-y-auto">
                     <div id="placeholder" class="h-full flex flex-col items-center justify-center text-center">
-                        <div class="w-16 h-16 bg-gray-900/50 rounded-full flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-14 h-14 bg-glass rounded-full flex items-center justify-center mb-4 border border-theme">
+                            <svg class="w-7 h-7 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                         </div>
-                        <p class="text-gray-400 text-lg mb-2">Waiting for logs...</p>
-                        <p class="text-gray-500 text-sm max-w-xs">Paste your error logs and click "Analyze Logs" to get instant diagnosis</p>
+                        <p class="text-secondary text-sm mb-2">Waiting for logs...</p>
+                        <p class="text-muted text-xs max-w-xs leading-relaxed">Paste your error logs and click "Analyze Logs" to get instant diagnosis</p>
                     </div>
 
-                    <!-- Diagnosis Content (Hidden by default) -->
-                    <div id="diagnosisContent" class="hidden space-y-6">
-                        <!-- Will be populated by JS -->
-                    </div>
+                    <div id="diagnosisContent" class="hidden space-y-4"></div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="mt-6 flex gap-3">
-                    <button id="copyBtn" class="hidden flex-1 bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="copyBtn"
+                            class="hidden flex-1 bg-glass hover:bg-accent/20 text-secondary font-medium py-3 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-theme">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                         </svg>
                         Copy
                     </button>
-                    <button id="clearBtn" class="hidden flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-medium py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="clearBtn"
+                            class="hidden flex-1 bg-glass hover:bg-accent/10 text-secondary font-medium py-3 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-theme">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
                         Clear
@@ -388,71 +419,71 @@ Database not responding on localhost..."></textarea>
             </div>
         </div>
 
-        <!-- Stats Section -->
-        <div class="grid md:grid-cols-3 gap-6 mt-12 animate-fade-in-up delay-300">
-            <div class="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
-                <div class="text-4xl font-bold gradient-text mb-2">AI-Powered</div>
-                <div class="text-gray-400">Smart Diagnosis</div>
+        <!-- Stats -->
+        <div class="grid md:grid-cols-3 gap-5 mt-12 animate-fade-in-up delay-300">
+            <div class="glass-card rounded-2xl p-6 text-center hover:scale-[1.02] transition-transform duration-200 soft-shadow">
+                <div class="text-3xl font-bold gradient-text mb-2">AI-Powered</div>
+                <div class="text-sm text-secondary">Smart Diagnosis</div>
             </div>
-            <div class="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
-                <div class="text-4xl font-bold gradient-text mb-2">100%</div>
-                <div class="text-gray-400">Free for Devs</div>
+            <div class="glass-card rounded-2xl p-6 text-center hover:scale-[1.02] transition-transform duration-200 soft-shadow">
+                <div class="text-3xl font-bold gradient-text mb-2">100%</div>
+                <div class="text-sm text-secondary">Free for Devs</div>
             </div>
-            <div class="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
-                <div class="text-4xl font-bold gradient-text mb-2">⚡</div>
-                <div class="text-gray-400">Instant Results</div>
+            <div class="glass-card rounded-2xl p-6 text-center hover:scale-[1.02] transition-transform duration-200 soft-shadow">
+                <div class="text-3xl font-bold gradient-text mb-2">⚡</div>
+                <div class="text-sm text-secondary">Instant Results</div>
             </div>
         </div>
 
-        <!-- Feature Cards -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 animate-fade-in-up delay-400">
-            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
-                <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Features -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mt-12 animate-fade-in-up delay-400">
+            <div class="glass-card rounded-2xl p-6 hover:border-accent/50 transition-all duration-200">
+                <div class="w-12 h-12 bg-glass rounded-xl flex items-center justify-center mb-4 border border-theme">
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold mb-2">Smart Analysis</h3>
-                <p class="text-sm text-gray-400">AI-powered diagnosis of production errors</p>
+                <h3 class="text-base font-semibold mb-2 text-primary">Smart Analysis</h3>
+                <p class="text-sm text-muted">AI-powered diagnosis of production errors</p>
             </div>
 
-            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
-                <div class="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="glass-card rounded-2xl p-6 hover:border-accent/50 transition-all duration-200">
+                <div class="w-12 h-12 bg-glass rounded-xl flex items-center justify-center mb-4 border border-theme">
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold mb-2">Instant Results</h3>
-                <p class="text-sm text-gray-400">Get diagnosis in seconds, not hours</p>
+                <h3 class="text-base font-semibold mb-2 text-primary">Instant Results</h3>
+                <p class="text-sm text-muted">Get diagnosis in seconds, not hours</p>
             </div>
 
-            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
-                <div class="w-12 h-12 bg-gradient-to-br from-white to-gray-300 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="glass-card rounded-2xl p-6 hover:border-accent/50 transition-all duration-200">
+                <div class="w-12 h-12 bg-glass rounded-xl flex items-center justify-center mb-4 border border-theme">
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold mb-2">Fix Suggestions</h3>
-                <p class="text-sm text-gray-400">Actionable solutions for every error</p>
+                <h3 class="text-base font-semibold mb-2 text-primary">Fix Suggestions</h3>
+                <p class="text-sm text-muted">Actionable solutions for every error</p>
             </div>
 
-            <div class="glass-card rounded-2xl p-6 hover:border-red-500/30 transition-all duration-300">
-                <div class="w-12 h-12 bg-gradient-to-br from-red-400 to-gray-600 rounded-xl flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="glass-card rounded-2xl p-6 hover:border-accent/50 transition-all duration-200">
+                <div class="w-12 h-12 bg-glass rounded-xl flex items-center justify-center mb-4 border border-theme">
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold mb-2">Secure & Private</h3>
-                <p class="text-sm text-gray-400">Your logs stay safe and confidential</p>
+                <h3 class="text-base font-semibold mb-2 text-primary">Secure & Private</h3>
+                <p class="text-sm text-muted">Your logs stay safe and confidential</p>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20 animate-fade-in delay-500">
-        <div class="text-center text-gray-400">
-            <p class="mb-2">Built with ❤️ for developers who've suffered through "it works on my machine"</p>
-            <p class="text-sm text-gray-500">Made by a dev who faced 35 prod crashes and said "never again"</p>
+        <div class="text-center text-muted text-sm">
+            <p class="mb-2">Built for developers who've suffered through "it works on my machine"</p>
+            <p class="text-xs text-secondary">Made by a dev who faced 35 prod crashes and said "never again"</p>
         </div>
     </footer>
 </div>
@@ -461,55 +492,95 @@ Database not responding on localhost..."></textarea>
     // ========================================
     // CONFIGURATION
     // ========================================
-       const API_URL = 'https://prodpulse-ai-1.onrender.com/api';
+    const API_URL = 'https://prodpulse-ai-1.onrender.com/api';
+
     // ========================================
-    // THREE.JS SCENE SETUP
+    // THEME SYSTEM
+    // ========================================
+    const htmlEl = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = document.getElementById('sunIcon');
+    const moonIcon = document.getElementById('moonIcon');
+    const themeLabel = document.getElementById('themeLabel');
+
+    function applyTheme(theme) {
+        htmlEl.setAttribute('data-theme', theme);
+        localStorage.setItem('prodpulse-theme', theme);
+
+        if (theme === 'light') {
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+            themeLabel.textContent = 'Day';
+        } else {
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+            themeLabel.textContent = 'Night';
+        }
+    }
+
+    // Load saved theme or system preference
+    const savedTheme = localStorage.getItem('prodpulse-theme');
+    if (savedTheme) {
+        applyTheme(savedTheme);
+    } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light');
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const current = htmlEl.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+    });
+
+    // ========================================
+    // OPTIMIZED THREE.JS
     // ========================================
     let scene, camera, renderer, particles;
 
     function initThreeJS() {
         const container = document.getElementById('canvas-container');
+        const isMobile = window.innerWidth < 768;
 
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 50;
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 500);
+        camera.position.z = 80;
 
-        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer = new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: false,
+            powerPreference: 'high-performance'
+        });
+
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.2 : 1.5));
         container.appendChild(renderer.domElement);
 
+        const particleCount = isMobile ? 250 : 600;
         const geometry = new THREE.BufferGeometry();
-        const particleCount = 1000;
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
 
-        for (let i = 0; i < particleCount * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 200;
-            positions[i + 1] = (Math.random() - 0.5) * 200;
-            positions[i + 2] = (Math.random() - 0.5) * 200;
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            positions[i3] = (Math.random() - 0.5) * 180;
+            positions[i3 + 1] = (Math.random() - 0.5) * 180;
+            positions[i3 + 2] = (Math.random() - 0.5) * 180;
 
-            const rand = Math.random();
-            if (rand > 0.7) {
-                colors[i] = 1;
-                colors[i + 1] = 1;
-                colors[i + 2] = 1;
-            } else {
-                colors[i] = 1;
-                colors[i + 1] = Math.random() * 0.2;
-                colors[i + 2] = Math.random() * 0.2;
-            }
+            const brightness = Math.random() * 0.6 + 0.4;
+            colors[i3] = brightness;
+            colors[i3 + 1] = brightness * 0.95;
+            colors[i3 + 2] = brightness * 1.05;
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const material = new THREE.PointsMaterial({
-            size: 2,
+            size: isMobile ? 1.2 : 1.8,
             vertexColors: true,
             transparent: true,
-            opacity: 0.6,
-            blending: THREE.AdditiveBlending
+            opacity: 0.4
         });
 
         particles = new THREE.Points(geometry, material);
@@ -520,24 +591,19 @@ Database not responding on localhost..."></textarea>
 
     function animate() {
         requestAnimationFrame(animate);
-
-        particles.rotation.x += 0.0002;
-        particles.rotation.y += 0.0003;
-
-        const mouseX = (window.innerWidth / 2);
-        const mouseY = (window.innerHeight / 2);
-
-        camera.position.x += (mouseX / 1000 - camera.position.x) * 0.05;
-        camera.position.y += (-mouseY / 1000 - camera.position.y) * 0.05;
-        camera.lookAt(scene.position);
-
+        if (particles) {
+            particles.rotation.x += 0.00015;
+            particles.rotation.y += 0.0002;
+        }
         renderer.render(scene, camera);
     }
 
     window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        if (camera && renderer) {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight, false);
+        }
     });
 
     initThreeJS();
@@ -561,35 +627,34 @@ Database not responding on localhost..."></textarea>
     // ========================================
     logInput.addEventListener('input', function() {
         const text = this.value.trim();
-        const words = text === '' ? 0 : text.split(/\s+/).length;
-
+        const words = text ? text.split(/\s+/).length : 0;
         wordCounter.textContent = `${words} / 150 words`;
 
+        const counterEl = wordCounter;
+        counterEl.className = 'absolute bottom-4 right-5 px-3.5 py-2 bg-glass backdrop-blur-sm rounded-xl text-xs font-mono font-medium border border-theme';
+
         if (words > 150) {
-            wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-red-500/20 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-red-400 border border-red-500/50';
+            counterEl.classList.add('text-red-400', 'border-red-400/50', 'bg-red-500/10');
         } else if (words > 120) {
-            wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-yellow-500/20 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-yellow-400 border border-yellow-500/50';
-        } else {
-            wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-gray-400 border border-gray-800';
+            counterEl.classList.add('text-yellow-400', 'border-yellow-400/50', 'bg-yellow-500/10');
         }
     });
 
     // ========================================
-    // FETCH RATE LIMIT STATUS ON LOAD
+    // RATE LIMIT
     // ========================================
     async function fetchRateLimitStatus() {
         try {
-            const response = await fetch(`${API_BASE_URL}/rate-limit-status`);
+            const response = await fetch(`${API_URL}/rate-limit-status`);
             if (response.ok) {
                 const data = await response.json();
                 remainingRequests.textContent = data.remainingRequests;
                 rateLimitInfo.classList.remove('hidden');
             }
         } catch (error) {
-            console.log('Could not fetch rate limit status');
+            console.log('Rate limit check failed');
         }
     }
-
     fetchRateLimitStatus();
 
     // ========================================
@@ -597,150 +662,106 @@ Database not responding on localhost..."></textarea>
     // ========================================
     analyzeBtn.addEventListener('click', async function() {
         const text = logInput.value.trim();
-        const wordCount = text === '' ? 0 : text.split(/\s+/).length;
+        const wordCount = text ? text.split(/\s+/).length : 0;
 
         if (!text) {
-            showDiagnosis('warning', '⚠️ No Input', '<p class="text-gray-300">Please paste your production logs first.</p>');
+            showDiagnosis('warning', '⚠️ No Input', 'Please paste your production logs first.');
             return;
         }
 
         if (wordCount > 150) {
-            showDiagnosis('error', '🚫 Word Limit Exceeded', `<p class="text-gray-300">Your log paste is <strong>${wordCount} words</strong>. Please keep it under 150 words.</p><p class="text-gray-400 mt-4 text-sm">💡 <em>Tip: Extract just the error section - look for keywords like "Error", "Exception", "Failed", or "FATAL"</em></p>`);
+            showDiagnosis('error', '🚫 Word Limit Exceeded',
+                `Your log paste is <strong>${wordCount}</strong> words. Please keep it under 150 words.<br><br>` +
+                '<small>💡 Tip: Extract just the error section - look for keywords like "Error", "Exception", "Failed", or "FATAL".</small>'
+            );
             return;
         }
 
-        // Show loading state
-        analyzeBtn.innerHTML = `
-            <span class="relative z-10 flex items-center justify-center gap-3">
-                <div class="flex gap-1">
-                    <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
-                    <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
-                    <div class="w-2 h-2 bg-white rounded-full typing-dot"></div>
-                </div>
-                Analyzing...
-            </span>
-        `;
+        // Loading state
+        const originalHTML = analyzeBtn.innerHTML;
+        analyzeBtn.innerHTML = '<div class="loading mr-2"></div>Analyzing...';
         analyzeBtn.disabled = true;
 
         try {
-            // Call backend API
-            const response = await fetch(`${API_BASE_URL}/analyze`, {
+            const response = await fetch(`${API_URL}/analyze`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    logs: text
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ logs: text })
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || 'Analysis failed');
             }
 
             const data = await response.json();
-
-            // Show diagnosis
             showDiagnosis(data.severity, data.title, data.content);
 
-            // Update rate limit
             fetchRateLimitStatus();
-
-            // Show action buttons
             copyBtn.classList.remove('hidden');
             clearBtn.classList.remove('hidden');
 
         } catch (error) {
-            console.error('Error:', error);
-
-            if (error.message.includes('Rate limit')) {
-                showDiagnosis('error', '⚠️ Rate Limit Exceeded', `<p class="text-gray-300">${error.message}</p><p class="text-gray-400 mt-4">Please try again later or upgrade to Pro tier for unlimited access.</p>`);
-            } else {
-                showDiagnosis('error', '❌ Analysis Failed', `<p class="text-gray-300">Unable to analyze logs at this time.</p><p class="text-gray-400 mt-4 text-sm">Error: ${error.message}</p><p class="text-gray-400 mt-2 text-sm">Make sure your backend is running at ${API_BASE_URL}</p>`);
-            }
+            const msg = error.message.includes('Rate limit')
+                ? `Rate limit exceeded. <span id="remainingRequests">--</span> analyses remaining.`
+                : `Analysis failed: ${error.message}`;
+            showDiagnosis('error', '❌ Failed', msg);
         } finally {
-            // Reset button
-            analyzeBtn.innerHTML = `
-                <span class="relative z-10 flex items-center justify-center gap-3">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    Analyze Logs
-                </span>
-            `;
+            analyzeBtn.innerHTML = originalHTML;
             analyzeBtn.disabled = false;
         }
     });
 
     // ========================================
-    // SHOW DIAGNOSIS
+    // DIAGNOSIS DISPLAY
     // ========================================
     function showDiagnosis(severity, title, content) {
         placeholder.classList.add('hidden');
         diagnosisContent.classList.remove('hidden');
 
-        let badgeClass, badgeText;
+        const badgeConfig = {
+            critical: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-400/60', icon: '●' },
+            warning: { bg: 'bg-yellow-500/20', text: 'text-yellow-300', border: 'border-yellow-400/60', icon: '●' },
+            error: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-400/60', icon: '●' },
+            default: { bg: 'bg-accent/20', text: 'text-accent', border: 'border-accent/40', icon: '○' }
+        };
 
-        if (severity === 'critical') {
-            badgeClass = 'bg-red-500/20 text-red-400 border-red-500/50';
-            badgeText = '🔴 Critical';
-        } else if (severity === 'warning') {
-            badgeClass = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
-            badgeText = '⚠️ Warning';
-        } else if (severity === 'error') {
-            badgeClass = 'bg-red-500/20 text-red-400 border-red-500/50';
-            badgeText = '❌ Error';
-        } else {
-            badgeClass = 'bg-blue-500/20 text-blue-400 border-blue-500/50';
-            badgeText = 'ℹ️ Info';
-        }
+        const config = badgeConfig[severity] || badgeConfig.default;
 
         diagnosisContent.innerHTML = `
-            <div class="flex items-center gap-3 pb-4 border-b border-gray-800">
-                <span class="px-4 py-2 rounded-lg font-semibold text-sm ${badgeClass} border">
-                    ${badgeText}
+            <div class="flex items-center gap-3 pb-4 border-b border-theme">
+                <span class="px-3 py-1.5 rounded-full text-xs font-semibold ${config.bg} ${config.text} ${config.border} border">
+                    ${config.icon} ${title}
                 </span>
-                <span class="text-gray-300 font-medium">${title}</span>
             </div>
-            <div class="text-gray-300 leading-relaxed diagnosis-html">
-                ${content}
-            </div>
+            <div class="text-secondary leading-relaxed diagnosis-html">${content}</div>
         `;
-
         outputBox.scrollTop = 0;
     }
 
     // ========================================
-    // COPY BUTTON
+    // ACTION BUTTONS
     // ========================================
-    copyBtn.addEventListener('click', function() {
+    copyBtn.addEventListener('click', async () => {
         const text = diagnosisContent.innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            copyBtn.innerHTML = `
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                Copied!
-            `;
+        try {
+            await navigator.clipboard.writeText(text);
+            const original = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>Copied!';
+            copyBtn.classList.add('bg-accent/30', 'text-accent');
             setTimeout(() => {
-                copyBtn.innerHTML = `
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                    </svg>
-                    Copy
-                `;
+                copyBtn.innerHTML = original;
+                copyBtn.classList.remove('bg-accent/30', 'text-accent');
             }, 2000);
-        });
+        } catch (err) {
+            console.error('Copy failed', err);
+        }
     });
 
-    // ========================================
-    // CLEAR BUTTON
-    // ========================================
-    clearBtn.addEventListener('click', function() {
+    clearBtn.addEventListener('click', () => {
         logInput.value = '';
         wordCounter.textContent = '0 / 150 words';
-        wordCounter.className = 'absolute bottom-4 right-6 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-sm font-mono font-medium text-gray-400 border border-gray-800';
+        wordCounter.className = 'absolute bottom-4 right-5 px-3.5 py-2 bg-glass backdrop-blur-sm rounded-xl text-xs font-mono font-medium text-secondary border border-theme';
 
         diagnosisContent.classList.add('hidden');
         placeholder.classList.remove('hidden');
@@ -749,9 +770,9 @@ Database not responding on localhost..."></textarea>
     });
 
     // ========================================
-    // KEYBOARD SHORTCUT (Ctrl/Cmd + Enter)
+    // KEYBOARD SHORTCUT
     // ========================================
-    logInput.addEventListener('keydown', function(e) {
+    logInput.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             analyzeBtn.click();
         }
