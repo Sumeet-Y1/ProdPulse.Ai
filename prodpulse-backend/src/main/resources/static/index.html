@@ -459,23 +459,10 @@ Database not responding on localhost..."></textarea>
         </div>
     </main>
 
-    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20 animate-fade-in-up delay-500 border-t border-theme">
-        <div class="text-center">
-            <div class="flex items-center justify-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-full border border-theme bg-glass flex items-center justify-center">
-                    <span class="text-[10px] tracking-[0.2em] uppercase font-semibold">PP</span>
-                </div>
-                <span class="text-sm font-medium text-primary">ProdPulse.AI</span>
-            </div>
-            <p class="text-sm text-secondary mb-2">AI-Powered Production Log Analysis Platform</p>
-            <p class="text-xs text-muted mb-4">Empowering developers with intelligent error diagnosis and real-time insights</p>
-            <div class="flex items-center justify-center gap-6 text-xs text-muted">
-                <span>© 2026 ProdPulse.AI</span>
-                <span>•</span>
-                <span>Built with Java & Spring Boot</span>
-                <span>•</span>
-                <span>AI Integration</span>
-            </div>
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20 animate-fade-in delay-500">
+        <div class="text-center text-muted text-sm">
+            <p class="mb-2">Built for developers who've suffered through "it works on my machine"</p>
+            <p class="text-xs text-secondary">Made by a dev who faced 35 prod crashes and said "never again"</p>
         </div>
     </footer>
 </div>
@@ -498,6 +485,7 @@ Database not responding on localhost..."></textarea>
 
             this.render();
 
+            // Also console log for browser devtools
             console[type === 'error' ? 'error' : 'log'](`[${timestamp}] ${message}`, data || '');
         },
 
@@ -525,7 +513,7 @@ Database not responding on localhost..."></textarea>
     };
 
     // ========================================
-    // CONFIGURATION - UPDATE YOUR BACKEND URL HERE
+    // CONFIGURATION
     // ========================================
     const API_URL = 'https://prodpulse-ai-1.onrender.com/api';
     debugLogger.log('info', 'Application initialized', { API_URL });
@@ -772,7 +760,8 @@ Database not responding on localhost..."></textarea>
             debugLogger.log('info', 'Analyze response received', {
                 status: response.status,
                 ok: response.ok,
-                statusText: response.statusText
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
             });
 
             if (!response.ok) {
@@ -794,7 +783,7 @@ Database not responding on localhost..."></textarea>
             const data = await response.json();
             debugLogger.log('success', 'Analysis completed', data);
 
-            showDiagnosis('success', '✅ Analysis Complete', data.diagnosis || 'No diagnosis available');
+            showDiagnosis(data.severity, data.title, data.content);
 
             fetchRateLimitStatus();
             copyBtn.classList.remove('hidden');
@@ -827,7 +816,6 @@ Database not responding on localhost..."></textarea>
             critical: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-400/60', icon: '●' },
             warning: { bg: 'bg-yellow-500/20', text: 'text-yellow-300', border: 'border-yellow-400/60', icon: '●' },
             error: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-400/60', icon: '●' },
-            success: { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-400/60', icon: '●' },
             default: { bg: 'bg-accent/20', text: 'text-accent', border: 'border-accent/40', icon: '○' }
         };
 
