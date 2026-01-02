@@ -753,7 +753,7 @@ Database not responding on localhost..."></textarea>
 
         try {
             const url = `${API_URL}/analyze`;
-            const payload = { errorLogs: text };
+            const payload = { logs: text };
 
             debugLogger.log('info', 'Sending analyze request', {
                 url,
