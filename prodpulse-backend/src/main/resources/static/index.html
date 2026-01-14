@@ -358,7 +358,7 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        Max 150 words
+                        Max 300 characters
                     </div>
                 </div>
 
@@ -375,7 +375,10 @@ Database not responding on localhost..."></textarea>
 
                     <div id="wordCounter"
                          class="absolute bottom-4 right-5 px-3.5 py-2 bg-glass backdrop-blur-sm rounded-xl text-xs font-mono font-medium text-secondary border border-theme">
-                        0 / 150 words
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <div style="font-weight: 600;">0 / 300 words</div>
+                            <div style="font-size: 10px; opacity: 0.7;">0 characters</div>
+                        </div>
                     </div>
                 </div>
 
@@ -459,10 +462,45 @@ Database not responding on localhost..."></textarea>
         </div>
     </main>
 
-    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20 animate-fade-in delay-500">
-        <div class="text-center text-muted text-sm">
-            <p class="mb-2">Built for developers who've suffered through "it works on my machine"</p>
-            <p class="text-xs text-secondary">Made by a dev who faced 35 prod crashes and said "never again"</p>
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mt-32" style="opacity: 1 !important;">
+        <div class="glass-card rounded-3xl p-10 soft-shadow" style="background: var(--bg-card) !important; border: 1px solid var(--border) !important;">
+            <div class="max-w-4xl mx-auto">
+                <!-- Main Footer Content -->
+                <div class="text-center mb-8 pb-8 border-b border-theme">
+                    <div class="flex items-center justify-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-full border-2 border-theme bg-glass flex items-center justify-center soft-shadow">
+                            <span class="text-sm tracking-[0.2em] uppercase font-bold gradient-text">PP</span>
+                        </div>
+                        <h3 class="text-2xl font-bold gradient-text">ProdPulse.AI</h3>
+                    </div>
+                    <p class="text-secondary text-sm max-w-2xl mx-auto leading-relaxed">
+                        AI-powered production log analysis that helps developers diagnose and resolve system crashes before they escalate. Built by developers, for developers.
+                    </p>
+                </div>
+
+                <!-- Footer Links/Info -->
+                <div class="grid md:grid-cols-3 gap-8 mb-8">
+                    <div class="text-center">
+                        <h4 class="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Mission</h4>
+                        <p class="text-xs text-secondary leading-relaxed">Making production debugging accessible and instant for every developer</p>
+                    </div>
+                    <div class="text-center">
+                        <h4 class="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Technology</h4>
+                        <p class="text-xs text-secondary leading-relaxed">Powered by advanced AI models trained on millions of production logs</p>
+                    </div>
+                    <div class="text-center">
+                        <h4 class="text-sm font-semibold text-primary mb-3 uppercase tracking-wider">Commitment</h4>
+                        <p class="text-xs text-secondary leading-relaxed">100% free for developers, always improving, always available</p>
+                    </div>
+                </div>
+
+                <!-- Bottom Footer -->
+                <div class="text-center pt-6 border-t border-theme">
+                    <p class="text-xs text-muted">
+                        © 2026 ProdPulse.AI • Built with dedication by developers who've been there
+                    </p>
+                </div>
+            </div>
         </div>
     </footer>
 </div>
@@ -658,20 +696,28 @@ Database not responding on localhost..."></textarea>
     const remainingRequests = document.getElementById('remainingRequests');
 
     // ========================================
-    // WORD COUNTER
+    // WORD COUNTER (Character-based)
     // ========================================
     logInput.addEventListener('input', function() {
         const text = this.value.trim();
-        const words = text ? text.split(/\s+/).length : 0;
-        wordCounter.textContent = `${words} / 150 words`;
+        const charCount = text.length; // Each character counts as 1 word
+
+        wordCounter.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-weight: 600;">${charCount} / 300 words</div>
+                <div style="font-size: 10px; opacity: 0.7;">${charCount} characters</div>
+            </div>
+        `;
 
         const counterEl = wordCounter;
         counterEl.className = 'absolute bottom-4 right-5 px-3.5 py-2 bg-glass backdrop-blur-sm rounded-xl text-xs font-mono font-medium border border-theme';
 
-        if (words > 150) {
+        if (charCount > 300) {
             counterEl.classList.add('text-red-400', 'border-red-400/50', 'bg-red-500/10');
-        } else if (words > 120) {
+        } else if (charCount > 250) {
             counterEl.classList.add('text-yellow-400', 'border-yellow-400/50', 'bg-yellow-500/10');
+        } else {
+            counterEl.classList.add('text-secondary');
         }
     });
 
@@ -716,9 +762,9 @@ Database not responding on localhost..."></textarea>
     // ========================================
     analyzeBtn.addEventListener('click', async function() {
         const text = logInput.value.trim();
-        const wordCount = text ? text.split(/\s+/).length : 0;
+        const charCount = text.length; // Using character count as words
 
-        debugLogger.log('info', 'Analyze button clicked', { wordCount });
+        debugLogger.log('info', 'Analyze button clicked', { charCount });
 
         if (!text) {
             showDiagnosis('warning', '⚠️ No Input', 'Please paste your production logs first.');
@@ -726,12 +772,12 @@ Database not responding on localhost..."></textarea>
             return;
         }
 
-        if (wordCount > 150) {
-            showDiagnosis('error', '🚫 Word Limit Exceeded',
-                `Your log paste is <strong>${wordCount}</strong> words. Please keep it under 150 words.<br><br>` +
+        if (charCount > 300) {
+            showDiagnosis('error', '🚫 Character Limit Exceeded',
+                `Your log paste is <strong>${charCount}</strong> characters. Please keep it under 300 characters.<br><br>` +
                 '<small>💡 Tip: Extract just the error section - look for keywords like "Error", "Exception", "Failed", or "FATAL".</small>'
             );
-            debugLogger.log('warning', 'Word limit exceeded', { wordCount });
+            debugLogger.log('warning', 'Character limit exceeded', { charCount });
             return;
         }
 
@@ -853,7 +899,12 @@ Database not responding on localhost..."></textarea>
 
     clearBtn.addEventListener('click', () => {
         logInput.value = '';
-        wordCounter.textContent = '0 / 150 words';
+        wordCounter.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-weight: 600;">0 / 300 words</div>
+                <div style="font-size: 10px; opacity: 0.7;">0 characters</div>
+            </div>
+        `;
         wordCounter.className = 'absolute bottom-4 right-5 px-3.5 py-2 bg-glass backdrop-blur-sm rounded-xl text-xs font-mono font-medium text-secondary border border-theme';
 
         diagnosisContent.classList.add('hidden');
