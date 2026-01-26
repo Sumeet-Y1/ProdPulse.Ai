@@ -1,4 +1,4 @@
-# 🚀 ProdPulse.AI - Backend
+#  ProdPulse.AI - Backend
 
 <div align="center">
 
