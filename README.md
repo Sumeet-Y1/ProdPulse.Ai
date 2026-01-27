@@ -5,6 +5,7 @@
 ![Java](https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=java)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-brightgreen?style=for-the-badge&logo=spring)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql)
+![AWS RDS](https://img.shields.io/badge/AWS%20RDS-MySQL-orange?style=for-the-badge&logo=amazon-aws)
 ![Groq](https://img.shields.io/badge/Groq-LLaMA%203.3-purple?style=for-the-badge&logo=ai)
 
 **AI-Powered Production Log Analyzer**
@@ -30,6 +31,7 @@ ProdPulse.AI is an intelligent backend service that analyzes production error lo
 - 🛡️ **Error Handling**: Comprehensive exception handling with fallback responses
 - 🌐 **CORS Enabled**: Ready for frontend integration
 - 📊 **Severity Detection**: Automatically categorizes errors (Critical/Warning/Info)
+- ☁️ **Cloud-Native**: Deployed on AWS RDS for scalability and reliability
 
 ---
 
@@ -41,7 +43,7 @@ ProdPulse.AI is an intelligent backend service that analyzes production error lo
 | **Spring Boot** | 3.5.9 | Backend Framework |
 | **Spring AI** | 1.1.2 | AI Integration |
 | **Groq API** | Latest | LLM Provider (LLaMA 3.3-70B) |
-| **MySQL** | 8.0+ | Database |
+| **AWS RDS** | MySQL 8.0+ | Cloud Database |
 | **Hibernate** | 6.6.39 | ORM |
 | **Lombok** | 1.18.42 | Boilerplate Reduction |
 | **Maven** | Latest | Build Tool |
@@ -53,7 +55,7 @@ ProdPulse.AI is an intelligent backend service that analyzes production error lo
 ### Prerequisites
 
 - ☕ Java 21 or higher
-- 🗄️ MySQL 8.0 or higher
+- 🗄️ MySQL 8.0 or higher (local) OR AWS RDS MySQL instance
 - 🔑 Groq API Key ([Get one here](https://console.groq.com))
 - 📦 Maven
 
@@ -66,26 +68,70 @@ cd prodpulse-backend
 
 ### Step 2: Configure Database
 
+#### Option A: Local MySQL
+
 Create a MySQL database:
 
 ```sql
-CREATE DATABASE prodpulse_db;
+CREATE DATABASE prodpulse;
 ```
+
+#### Option B: AWS RDS MySQL (Recommended for Production)
+
+1. Create an RDS MySQL instance on AWS
+2. Set up security groups to allow your application's IP
+3. Note the RDS endpoint, username, and password
+4. Create database:
+   ```sql
+   CREATE DATABASE prodpulse;
+   ```
 
 ### Step 3: Configure Application
 
 Create `src/main/resources/application.properties`:
 
+#### For Local MySQL:
 ```properties
 # Server Configuration
 server.port=8080
 
 # Database Configuration
-spring.datasource.url=jdbc:mysql://localhost:3306/prodpulse_db
+spring.datasource.url=jdbc:mysql://localhost:3306/prodpulse
 spring.datasource.username=your_mysql_username
 spring.datasource.password=your_mysql_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+# Groq AI Configuration
+spring.ai.openai.api-key=gsk_your_groq_api_key_here
+spring.ai.openai.base-url=https://api.groq.com/openai
+spring.ai.openai.chat.options.model=llama-3.3-70b-versatile
+spring.ai.openai.chat.options.temperature=0.3
+spring.ai.openai.chat.options.max-tokens=2000
+
+# CORS Configuration (add your frontend URL)
+cors.allowed-origins=http://localhost:3000,https://your-frontend.netlify.app
+
+# Rate Limiting
+app.rate-limit.max-requests=10
+app.rate-limit.window-hours=24
+```
+
+#### For AWS RDS MySQL:
+```properties
+# Server Configuration
+server.port=8080
+
+# AWS RDS Database Configuration
+spring.datasource.url=jdbc:mysql://your-rds-endpoint.ap-south-1.rds.amazonaws.com:3306/prodpulse
+spring.datasource.username=admin
+spring.datasource.password=your_rds_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
 
 # Groq AI Configuration
 spring.ai.openai.api-key=gsk_your_groq_api_key_here
@@ -281,8 +327,36 @@ prodpulse-backend/
    - 🔍 What Happened (root cause)
    - 🔧 How to Fix (step-by-step solutions)
    - 💡 Prevention Tips (best practices)
-5. **Storage**: Analysis saved to MySQL for history tracking
+5. **Storage**: Analysis saved to AWS RDS MySQL for persistence and history tracking
 6. **Response**: Formatted HTML response returned to client
+
+---
+
+## ☁️ Cloud Architecture
+
+### Hybrid Cloud Deployment
+
+```
+┌─────────────────┐
+│  Render.com     │
+│  (Application)  │
+│  Spring Boot    │
+└────────┬────────┘
+         │
+         │ JDBC Connection
+         ▼
+┌─────────────────┐
+│   AWS RDS       │
+│  MySQL 8.0      │
+│  (Database)     │
+└─────────────────┘
+```
+
+**Benefits:**
+- ✅ Application hosted on Render (easy deployment)
+- ✅ Database on AWS RDS (managed, reliable, scalable)
+- ✅ Production-grade separation of concerns
+- ✅ Leverages AWS free tier (750 hours/month RDS)
 
 ---
 
@@ -290,6 +364,7 @@ prodpulse-backend/
 
 ### Database Connection Issues
 
+#### For Local MySQL:
 ```bash
 # Check MySQL is running
 sudo service mysql status
@@ -298,6 +373,20 @@ sudo service mysql status
 spring.datasource.username=root
 spring.datasource.password=your_password
 ```
+
+#### For AWS RDS:
+```bash
+# Test connection from local machine
+mysql -h your-rds-endpoint.ap-south-1.rds.amazonaws.com -P 3306 -u admin -p
+
+# Verify security group allows your IP on port 3306
+# Check RDS instance is "Available" status
+```
+
+**Common RDS Issues:**
+- **Connection timeout**: Security group not allowing port 3306
+- **Access denied**: Wrong username/password
+- **Unknown database**: Run `CREATE DATABASE prodpulse;` first
 
 ### Groq API Errors
 
@@ -320,17 +409,30 @@ server.port=8081
 
 ## 🚢 Deployment
 
-### Deploy to Railway
+### Deploy to Render with AWS RDS
 
-1. Create a new project on [Railway](https://railway.app)
-2. Add MySQL database service
-3. Deploy from GitHub repository
-4. Set environment variables:
-   - `SPRING_DATASOURCE_URL`
-   - `SPRING_DATASOURCE_USERNAME`
-   - `SPRING_DATASOURCE_PASSWORD`
-   - `SPRING_AI_OPENAI_API_KEY`
-   - `CORS_ALLOWED_ORIGINS`
+1. **Set up AWS RDS MySQL Database:**
+   - Create RDS MySQL instance (db.t3.micro for free tier)
+   - Configure security group to allow connections (port 3306)
+   - Create database: `CREATE DATABASE prodpulse;`
+   - Note the RDS endpoint, username, and password
+
+2. **Deploy Application to Render:**
+   - Create a new project on [Render](https://render.com)
+   - Connect your GitHub repository
+   - Set environment variables:
+     - `SPRING_DATASOURCE_URL=jdbc:mysql://your-rds-endpoint.rds.amazonaws.com:3306/prodpulse`
+     - `SPRING_DATASOURCE_USERNAME=admin`
+     - `SPRING_DATASOURCE_PASSWORD=your_rds_password`
+     - `SPRING_AI_OPENAI_API_KEY=gsk_your_groq_api_key`
+     - `CORS_ALLOWED_ORIGINS=https://your-frontend.netlify.app`
+
+3. **Update RDS Security Group:**
+   - Allow inbound traffic on port 3306 from 0.0.0.0/0 (or Render's IP ranges)
+
+4. **Deploy and verify:**
+   - Render will automatically build and deploy
+   - Check `/api/health` endpoint to verify connection
 
 ### Deploy with Docker
 
@@ -346,8 +448,13 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 # Build
 docker build -t prodpulse-backend .
 
-# Run
-docker run -p 8080:8080 prodpulse-backend
+# Run with AWS RDS
+docker run -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://your-rds-endpoint:3306/prodpulse \
+  -e SPRING_DATASOURCE_USERNAME=admin \
+  -e SPRING_DATASOURCE_PASSWORD=your_password \
+  -e SPRING_AI_OPENAI_API_KEY=gsk_your_key \
+  prodpulse-backend
 ```
 
 ---
@@ -364,9 +471,15 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
 ## 👨‍💻 Author
 
-**Your Name**
+**Sumeet Yadav**
 
 - GitHub: [@Sumeet-Y1](https://github.com/Sumeet-Y1)
 - Email: sumeety202@gmail.com
@@ -378,6 +491,7 @@ Contributions are welcome! Please follow these steps:
 ## 🙏 Acknowledgments
 
 - [Groq](https://groq.com) for the amazing LLM API
+- [AWS](https://aws.amazon.com) for reliable RDS infrastructure
 - [Spring Boot](https://spring.io/projects/spring-boot) for the robust framework
 - [Spring AI](https://spring.io/projects/spring-ai) for AI integration
 - All contributors and supporters
