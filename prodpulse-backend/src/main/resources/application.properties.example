@@ -1,0 +1,56 @@
+# Server
+server.port=8080
+
+# Spring AI
+spring.ai.openai.api-key=${groq.api.key1}
+spring.ai.openai.base-url=https://api.groq.com/openai
+spring.ai.openai.chat.options.temperature=0.3
+spring.ai.openai.chat.options.max-tokens=2000
+spring.ai.retry.max-attempts=1
+spring.application.name=ProdPulse Backend
+
+# Database
+spring.datasource.url=jdbc
+spring.datasource.username=
+spring.datasource.password=
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# CORS
+cors.allowed-origins=*
+
+# Rate Limiting
+app.rate-limit.max-requests=10
+app.rate-limit.window-hours=24
+
+# Logging
+logging.level.root=INFO
+logging.level.com.prodpulse=DEBUG
+
+# JWT
+jwt.secret=
+jwt.expiration=86400000
+
+# Email (Gmail SMTP)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=
+spring.mail.password=
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.properties.mail.smtp.connectiontimeout=5000
+spring.mail.properties.mail.smtp.timeout=5000
+spring.mail.properties.mail.smtp.writetimeout=5000
+
+# Google OAuth2
+spring.security.oauth2.client.registration.google.client-id=
+spring.security.oauth2.client.registration.google.client-secret=
+spring.security.oauth2.client.registration.google.scope=email,profile
+
+# Frontend URL
+frontend.url=http://localhost:3000

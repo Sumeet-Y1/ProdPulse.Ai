@@ -3,35 +3,30 @@ package com.prodpulse.prodpulse_backend.service;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Service for interacting with Groq AI
- * Handles log analysis using Groq's LLaMA models via OpenAI-compatible API
- */
 @Service
 public class AIService {
 
     private static final Logger logger = LoggerFactory.getLogger(AIService.class);
 
-    @Autowired
-    private OpenAiChatModel chatModel;
+    @Value("${groq.api.key1}")
+    private String apiKey1;
 
-    @Value("${spring.ai.openai.api-key}")
-    private String apiKey;
+    @Value("${groq.api.key2}")
+    private String apiKey2;
 
-    @Value("${spring.ai.openai.chat.options.model:llama-3.3-70b-versatile}")
-    private String modelName;
+    @Value("${groq.api.key3}")
+    private String apiKey3;
 
     @Value("${spring.ai.openai.chat.options.temperature:0.3}")
     private Double temperature;
@@ -39,172 +34,268 @@ public class AIService {
     @Value("${spring.ai.openai.chat.options.max-tokens:2000}")
     private Integer maxTokens;
 
+    // FREE tier fallback chain (best to worst, highest tokens/day first)
+    private static final List<String[]> FREE_CHAIN = List.of(
+            new String[]{"llama-3.1-8b-instant", "key1"},      // 500K tokens/day
+            new String[]{"allam-2-7b", "key1"},                  // 500K tokens/day
+            new String[]{"llama-3.1-8b-instant", "key2"},       // another 500K
+            new String[]{"allam-2-7b", "key2"},                  // another 500K
+            new String[]{"llama-3.1-8b-instant", "key3"},       // another 500K
+            new String[]{"groq/compound-mini", "key1"}           // unlimited fallback
+    );
+
+    // STARTER ₹999 fallback chain
+    private static final List<String[]> STARTER_CHAIN = List.of(
+            new String[]{"qwen/qwen3-32b", "key1"},              // 500K tokens/day
+            new String[]{"meta-llama/llama-4-scout-17b-16e-instruct", "key1"}, // 500K tokens/day
+            new String[]{"qwen/qwen3-32b", "key2"},              // another 500K
+            new String[]{"meta-llama/llama-4-scout-17b-16e-instruct", "key2"}, // another 500K
+            new String[]{"qwen/qwen3-32b", "key3"},              // another 500K
+            new String[]{"groq/compound", "key1"}                // unlimited fallback
+    );
+
+    // PRO ₹2,999 fallback chain
+    private static final List<String[]> PRO_CHAIN = List.of(
+            new String[]{"moonshotai/kimi-k2-instruct", "key1"}, // 300K tokens/day best quality
+            new String[]{"openai/gpt-oss-120b", "key1"},         // 200K tokens/day
+            new String[]{"moonshotai/kimi-k2-instruct", "key2"}, // another 300K
+            new String[]{"openai/gpt-oss-120b", "key2"},         // another 200K
+            new String[]{"moonshotai/kimi-k2-instruct", "key3"}, // another 300K
+            new String[]{"qwen/qwen3-32b", "key1"}               // fallback to starter quality
+    );
+
     @PostConstruct
     public void init() {
-        logger.info("=== GROQ API CONFIGURATION ===");
-        logger.info("API Key present: {}", (apiKey != null && !apiKey.equals("NOT_SET") && apiKey.length() > 10));
-        logger.info("API Key length: {}", (apiKey != null ? apiKey.length() : 0));
-        logger.info("Model: {}", modelName);
-        logger.info("Temperature: {}", temperature);
-        logger.info("Max Tokens: {}", maxTokens);
-        logger.info("Base URL: https://api.groq.com/openai/v1");
-        logger.info("Starts with gsk_: {}", (apiKey != null && apiKey.startsWith("gsk_")));
-        logger.info("==============================");
+        logger.info("=== PRODPULSE AI SERVICE ===");
+        logger.info("Key 1 present: {}", apiKey1 != null && apiKey1.length() > 10);
+        logger.info("Key 2 present: {}", apiKey2 != null && apiKey2.length() > 10);
+        logger.info("Key 3 present: {}", apiKey3 != null && apiKey3.length() > 10);
+        logger.info("FREE chain: {} models", FREE_CHAIN.size());
+        logger.info("STARTER chain: {} models", STARTER_CHAIN.size());
+        logger.info("PRO chain: {} models", PRO_CHAIN.size());
+        logger.info("===========================");
     }
 
-    /**
-     * System prompt for Groq - defines how AI should analyze logs
-     */
     private static final String SYSTEM_PROMPT = """
-            You are ProdPulse.AI, an expert production error diagnostic system.
-            You specialize in analyzing error logs from production environments,
-            particularly Railway, Docker, Node.js, MySQL, PostgreSQL, and common web frameworks.
+            You are ProdPulse.AI, the world's most advanced production error diagnostic system,
+            used by software companies to instantly understand and fix production failures.
             
-            Your role:
-            1. Analyze the error log provided
-            2. Identify the root cause
-            3. Provide clear, actionable solutions
-            4. Suggest prevention strategies
+            You are like a senior engineer with 20 years of experience across every tech stack,
+            who can look at any error log and immediately know what went wrong and exactly how to fix it.
             
-            Format your response as HTML with these sections:
+            YOUR CAPABILITIES:
+            You can analyze logs from ANY system including:
+            - Languages: Node.js, Java, Python, Go, Ruby, PHP, .NET, Rust, Kotlin, Swift
+            - Databases: MySQL, PostgreSQL, MongoDB, Redis, Cassandra, DynamoDB, Supabase
+            - Cloud: AWS, GCP, Azure, Railway, Render, Heroku, Vercel, Netlify, Fly.io
+            - Containers: Docker, Kubernetes, ECS, EKS, GKE
+            - Frameworks: Spring Boot, Django, Express, Laravel, Rails, FastAPI, NestJS, Next.js
+            - Message queues: Kafka, RabbitMQ, SQS
+            - Mobile backends, microservices, monoliths, serverless functions
+            
+            YOUR RULES:
+            - NEVER say "I cannot analyze this" — always give your best diagnosis
+            - If the log is unclear or incomplete, state your assumptions clearly
+            - Always include exact code snippets for fixes when relevant
+            - Be direct and actionable — developers are busy and under pressure
+            - Explain in plain English so non-technical managers can understand too
+            - If it is a CRITICAL error, make it very clear at the top
+            - Always give an estimated time to fix
+            
+            FORMAT YOUR RESPONSE AS HTML:
             
             <div class="diagnosis">
+            
+                <div class="severity-badge severity-{critical|warning|info}">
+                    🚨 CRITICAL | ⚠️ WARNING | ℹ️ INFO
+                </div>
+            
                 <h3>🔍 What Happened:</h3>
-                <p>Brief explanation of the root cause in simple terms</p>
-                
+                <p>Clear explanation of root cause in simple terms.</p>
+            
+                <h3>🎯 Root Cause:</h3>
+                <p>Technical deep dive into exactly why this error occurred.</p>
+            
                 <h3>🔧 How to Fix:</h3>
-                <ul>
-                    <li>Step 1: Specific action</li>
-                    <li>Step 2: Another action</li>
-                    <li>Step 3: Final action</li>
-                </ul>
-                
+                <ol>
+                    <li>
+                        <strong>Step 1: Title of action</strong>
+                        <p>Explanation of what to do</p>
+                        <pre><code>// Code snippet if applicable</code></pre>
+                    </li>
+                </ol>
+            
                 <h3>💡 Prevention Tips:</h3>
                 <ul>
-                    <li>Best practice 1</li>
-                    <li>Best practice 2</li>
+                    <li><strong>Tip 1:</strong> Explanation</li>
                 </ul>
+            
+                <h3>⏱️ Estimated Fix Time:</h3>
+                <p>How long this should realistically take to fix</p>
+            
+                <h3>🔗 Related Issues to Check:</h3>
+                <ul>
+                    <li>Other things that might be affected or related</li>
+                </ul>
+            
             </div>
-            
-            Focus on:
-            - Railway deployment issues
-            - Environment variable problems
-            - Database connection errors
-            - Memory/CPU issues (OOM)
-            - Port binding problems
-            - Docker container issues
-            - Common Node.js/Java/Python errors
-            
-            Keep explanations clear and actionable. Avoid jargon when possible.
             """;
 
     /**
-     * Analyze production error logs using Groq AI
-     *
-     * @param errorLog The error log text to analyze
-     * @return AI-generated diagnosis in HTML format
+     * Analyze log for FREE tier users
      */
     public String analyzeLog(String errorLog) {
-        logger.info("Starting log analysis with Groq AI ({})", modelName);
-
-        try {
-            // Create the full prompt with system instructions and user input
-            String fullPrompt = SYSTEM_PROMPT + "\n\nAnalyze this production error log and provide diagnosis:\n\n"
-                    + errorLog
-                    + "\n\nRemember to format your response as HTML as specified in the system instructions.";
-
-            // Create user message
-            UserMessage userMessage = new UserMessage(fullPrompt);
-
-            // Create chat options for Groq
-            OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
-                    .model(modelName)
-                    .temperature(temperature)
-                    .maxTokens(maxTokens)
-                    .build();
-
-            // Create prompt with options
-            Prompt prompt = new Prompt(List.of(userMessage), chatOptions);
-
-            // Call Groq API (via OpenAI-compatible endpoint)
-            logger.debug("Calling Groq API with model: {}", modelName);
-            ChatResponse response = chatModel.call(prompt);
-
-            // For Spring AI 1.1.2: Access the content field directly
-            AssistantMessage message = response.getResult().getOutput();
-            String diagnosis = message.getText();
-
-            logger.info("Successfully received diagnosis from Groq AI");
-            return diagnosis;
-
-        } catch (Exception e) {
-            logger.error("Error calling Groq API: {}", e.getMessage(), e);
-
-            // Fallback response if AI fails
-            return generateFallbackResponse(errorLog);
-        }
+        return analyzeWithChain(errorLog, FREE_CHAIN);
     }
 
     /**
-     * Determine severity level from error log
-     *
-     * @param errorLog The error log text
-     * @return Severity level: "critical", "warning", or "info"
+     * Analyze log based on user plan
      */
-    public String determineSeverity(String errorLog) {
-        String logLower = errorLog.toLowerCase();
-
-        // Critical errors
-        if (logLower.contains("fatal") ||
-                logLower.contains("outofmemoryerror") ||
-                logLower.contains("cannot connect") ||
-                logLower.contains("connection refused") ||
-                logLower.contains("segmentation fault") ||
-                logLower.contains("core dumped")) {
-            return "critical";
-        }
-
-        // Warning level
-        if (logLower.contains("error") ||
-                logLower.contains("exception") ||
-                logLower.contains("failed") ||
-                logLower.contains("timeout")) {
-            return "warning";
-        }
-
-        // Info level
-        return "info";
+    public String analyzeLogByPlan(String errorLog, String plan) {
+        return switch (plan.toUpperCase()) {
+            case "PRO", "ENTERPRISE" -> analyzeWithChain(errorLog, PRO_CHAIN);
+            case "STARTER" -> analyzeWithChain(errorLog, STARTER_CHAIN);
+            default -> analyzeWithChain(errorLog, FREE_CHAIN);
+        };
     }
 
     /**
-     * Extract title from error log (first error line or summary)
-     *
-     * @param errorLog The error log text
-     * @return Brief title for the error
+     * Try each model in the chain until one succeeds
      */
-    public String extractTitle(String errorLog) {
-        String[] lines = errorLog.split("\n");
+    private String analyzeWithChain(String errorLog, List<String[]> chain) {
+        for (String[] modelConfig : chain) {
+            String model = modelConfig[0];
+            String keyName = modelConfig[1];
+            String key = resolveKey(keyName);
 
-        // Find first line with "Error" or "Exception"
-        for (String line : lines) {
-            if (line.toLowerCase().contains("error") ||
-                    line.toLowerCase().contains("exception")) {
-                // Clean up and limit length
-                String title = line.trim();
-                if (title.length() > 100) {
-                    title = title.substring(0, 97) + "...";
+            try {
+                logger.info("Trying model: {} with key: {}", model, keyName);
+                String result = analyzeWithModel(errorLog, model, key);
+                logger.info("Success with model: {}", model);
+                return result;
+            } catch (Exception e) {
+                if (isRateLimitError(e)) {
+                    logger.warn("Rate limit hit for model: {}, key: {}. Trying next...", model, keyName);
+                } else {
+                    logger.error("Error with model: {}, key: {}. Error: {}", model, keyName, e.getMessage());
                 }
-                return title;
             }
         }
 
-        // Fallback: use first non-empty line
+        // All models exhausted
+        logger.error("All models in chain exhausted!");
+        return generateFallbackResponse(errorLog);
+    }
+
+    /**
+     * Call specific model with specific API key
+     */
+    private String analyzeWithModel(String errorLog, String model, String key) {
+        String fullPrompt = SYSTEM_PROMPT
+                + "\n\nAnalyze this production error log and provide a complete diagnosis:\n\n"
+                + "```\n" + errorLog + "\n```"
+                + "\n\nProvide your full HTML diagnosis now:";
+
+        // Build a new OpenAiApi with the specific key
+        OpenAiApi openAiApi = OpenAiApi.builder()
+                .baseUrl("https://api.groq.com/openai")
+                .apiKey(key)
+                .build();
+
+        OpenAiChatModel model1 = OpenAiChatModel.builder()
+                .openAiApi(openAiApi)
+                .build();
+
+        OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
+                .model(model)
+                .temperature(temperature)
+                .maxTokens(maxTokens)
+                .build();
+
+        Prompt prompt = new Prompt(List.of(new UserMessage(fullPrompt)), chatOptions);
+        ChatResponse response = model1.call(prompt);
+
+        String diagnosis = response.getResult().getOutput().getText();
+
+        // Clean markdown if AI wraps in code blocks
+        diagnosis = diagnosis
+                .replaceAll("```html\\n?", "")
+                .replaceAll("```\\n?", "")
+                .trim();
+
+        return diagnosis;
+    }
+
+    private String resolveKey(String keyName) {
+        return switch (keyName) {
+            case "key2" -> apiKey2;
+            case "key3" -> apiKey3;
+            default -> apiKey1;
+        };
+    }
+
+    private boolean isRateLimitError(Exception e) {
+        String msg = e.getMessage();
+        if (msg == null) return false;
+        return msg.contains("429") ||
+                msg.contains("rate limit") ||
+                msg.contains("rate_limit") ||
+                msg.contains("quota") ||
+                msg.contains("too many requests");
+    }
+
+    public String determineSeverity(String errorLog) {
+        String logLower = errorLog.toLowerCase();
+
+        if (logLower.contains("fatal") ||
+                logLower.contains("outofmemoryerror") ||
+                logLower.contains("out of memory") ||
+                logLower.contains("cannot connect") ||
+                logLower.contains("connection refused") ||
+                logLower.contains("segmentation fault") ||
+                logLower.contains("core dumped") ||
+                logLower.contains("system crash") ||
+                logLower.contains("kernel panic") ||
+                logLower.contains("disk full") ||
+                logLower.contains("no space left") ||
+                logLower.contains("deadlock") ||
+                logLower.contains("nullpointerexception") ||
+                logLower.contains("stackoverflow")) {
+            return "critical";
+        }
+
+        if (logLower.contains("error") ||
+                logLower.contains("exception") ||
+                logLower.contains("failed") ||
+                logLower.contains("timeout") ||
+                logLower.contains("unauthorized") ||
+                logLower.contains("forbidden") ||
+                logLower.contains("not found") ||
+                logLower.contains("deprecated") ||
+                logLower.contains("retry")) {
+            return "warning";
+        }
+
+        return "info";
+    }
+
+    public String extractTitle(String errorLog) {
+        String[] lines = errorLog.split("\n");
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.toLowerCase().contains("exception") ||
+                    trimmed.toLowerCase().contains("fatal") ||
+                    trimmed.toLowerCase().contains("error")) {
+                if (trimmed.length() > 100) trimmed = trimmed.substring(0, 97) + "...";
+                return trimmed;
+            }
+        }
+
         for (String line : lines) {
             String trimmed = line.trim();
             if (!trimmed.isEmpty()) {
-                if (trimmed.length() > 100) {
-                    trimmed = trimmed.substring(0, 97) + "...";
-                }
+                if (trimmed.length() > 100) trimmed = trimmed.substring(0, 97) + "...";
                 return trimmed;
             }
         }
@@ -212,33 +303,30 @@ public class AIService {
         return "Production Error Analysis";
     }
 
-    /**
-     * Generate fallback response if AI service fails
-     *
-     * @param errorLog The error log text
-     * @return Basic HTML diagnosis
-     */
     private String generateFallbackResponse(String errorLog) {
-        logger.warn("Generating fallback response (AI service unavailable)");
+        logger.warn("Generating fallback response — all models exhausted");
 
         return """
                 <div class="diagnosis">
+                    <div class="severity-badge severity-warning">⚠️ WARNING</div>
+                    
                     <h3>⚠️ AI Service Temporarily Unavailable</h3>
-                    <p>We're unable to process your log with AI right now, but here's what we can tell you:</p>
+                    <p>All AI models are temporarily rate limited. Please try again in a few minutes.</p>
                     
                     <h3>🔍 Your Error Log:</h3>
-                    <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;">%s</pre>
+                    <pre><code>%s</code></pre>
                     
-                    <h3>💡 Common Solutions:</h3>
-                    <ul>
-                        <li>Check your environment variables are correctly set</li>
-                        <li>Verify database connection strings</li>
-                        <li>Ensure all dependencies are installed</li>
-                        <li>Check Railway/deployment logs for more context</li>
-                        <li>Verify memory and CPU limits aren't exceeded</li>
-                    </ul>
+                    <h3>🔧 Common Fixes to Try:</h3>
+                    <ol>
+                        <li><strong>Check environment variables</strong><p>Ensure all required env vars are set correctly.</p></li>
+                        <li><strong>Verify database connection</strong><p>Check your connection string and credentials.</p></li>
+                        <li><strong>Check dependencies</strong><p>Run your package manager install command.</p></li>
+                        <li><strong>Review deployment logs</strong><p>Check your hosting platform for more context.</p></li>
+                        <li><strong>Check resource limits</strong><p>Ensure memory, CPU, disk limits aren't exceeded.</p></li>
+                    </ol>
                     
-                    <p>Please try again in a few moments. If the issue persists, contact support.</p>
+                    <h3>⏱️ Estimated Fix Time:</h3>
+                    <p>Please try again in a few minutes for AI-powered diagnosis.</p>
                 </div>
                 """.formatted(errorLog.length() > 500 ? errorLog.substring(0, 500) + "..." : errorLog);
     }

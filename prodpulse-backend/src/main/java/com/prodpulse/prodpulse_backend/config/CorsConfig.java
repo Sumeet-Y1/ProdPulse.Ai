@@ -7,50 +7,35 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.Arrays;
 import java.util.List;
 
-/**
- * CORS Configuration
- * Allows frontend (Netlify) to call backend API
- */
 @Configuration
 public class CorsConfig {
 
     @Value("${cors.allowed-origins:*}")
     private String allowedOrigins;
 
-    /**
-     * Configure CORS filter
-     * Allows frontend to make cross-origin requests to API
-     */
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Set allowed origins from application.properties
-        if ("*".equals(allowedOrigins)) {
-            // Allow all origins if not specified
-            config.addAllowedOriginPattern("*");
-        } else {
-            // Set specific origins
-            List<String> origins = Arrays.asList(allowedOrigins.split(","));
-            config.setAllowedOrigins(origins);
-        }
+        // Allow credentials — required for WebSocket + SockJS
+        config.setAllowCredentials(true);
 
-        // Allow credentials only if specific origins are set
-        if (!"*".equals(allowedOrigins)) {
-            config.setAllowCredentials(true);
-        }
+        // Allow specific origins with credentials
+        config.setAllowedOriginPatterns(List.of("*"));
 
         // Allow all headers
         config.addAllowedHeader("*");
 
-        // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+        // Allow all methods
         config.addAllowedMethod("*");
 
-        // Apply CORS configuration to all endpoints
+        // Expose headers
+        config.addExposedHeader("Authorization");
+
+        // Apply to all endpoints including /ws/**
         source.registerCorsConfiguration("/**", config);
 
         return new CorsFilter(source);

@@ -40,4 +40,6 @@ public interface AnalysisHistoryRepository extends JpaRepository<AnalysisHistory
      */
     List<AnalysisHistory> findByIpAddressAndCreatedAtAfter(String ipAddress, LocalDateTime since);
 
+    List<AnalysisHistory> findByUserIdOrderByCreatedAtDesc(Long userId);
+
 }
