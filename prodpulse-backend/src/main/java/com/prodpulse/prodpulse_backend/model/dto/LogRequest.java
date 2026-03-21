@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -15,6 +16,5 @@ public class LogRequest {
     @Size(max = 2000, message = "Logs must be less than 2000 characters (approximately 150 words)")
     private String logs;
 
-    private Object context; // accept SDK context, ignored in processing
-
+    private Map<String, Object> context;
 }
