@@ -30,7 +30,7 @@ public class LogIngestionController {
     @PostMapping("/ingest")
     public ResponseEntity<?> ingestLogs(
             @RequestHeader("X-API-Key") String apiKeyValue,
-            @RequestBody Map<String, String> body,
+            @RequestBody Map<String, Object> body,
             HttpServletRequest request) {
 
         // 1. Validate API key
@@ -68,7 +68,7 @@ public class LogIngestionController {
         }
 
         // 5. Extract logs
-        String logs = body.get("logs");
+        String logs = (String) body.get("logs");
         if (logs == null || logs.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Logs cannot be empty"));
