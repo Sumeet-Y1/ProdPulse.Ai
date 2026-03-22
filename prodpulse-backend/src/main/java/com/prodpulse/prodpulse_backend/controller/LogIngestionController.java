@@ -45,7 +45,31 @@ public class LogIngestionController {
         // 2. Get user
         User user = apiKey.getUser();
 
-        // 3. Check and reset daily counter if new day
+        // 3. Extract sentAt from context for deduplication
+        String sentAt = null;
+        try {
+            Object contextObj = body.get("context");
+            if (contextObj instanceof Map) {
+                Object sentAtObj = ((Map<?, ?>) contextObj).get("sentAt");
+                if (sentAtObj != null) {
+                    sentAt = sentAtObj.toString();
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // 4. Deduplication check — if same sentAt already processed, return success silently
+        if (sentAt != null) {
+            boolean alreadyProcessed = analysisHistoryRepository
+                    .existsByUserIdAndSentAt(user.getId(), sentAt);
+            if (alreadyProcessed) {
+                return ResponseEntity.ok(Map.of(
+                        "status", "duplicate",
+                        "message", "Log already processed"
+                ));
+            }
+        }
+
+        // 5. Check and reset daily counter if new day
         LocalDateTime now = LocalDateTime.now();
         if (user.getLastResetDate() == null ||
                 user.getLastResetDate().toLocalDate().isBefore(now.toLocalDate())) {
@@ -54,7 +78,7 @@ public class LogIngestionController {
             userRepository.save(user);
         }
 
-        // 4. Check daily limit
+        // 6. Check daily limit
         if (user.getDailyAnalysesCount() >= user.getDailyLimit()) {
             return ResponseEntity.status(429)
                     .body(Map.of(
@@ -67,14 +91,14 @@ public class LogIngestionController {
                     ));
         }
 
-        // 5. Extract logs
+        // 7. Extract logs
         String logs = (String) body.get("logs");
         if (logs == null || logs.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Logs cannot be empty"));
         }
 
-        // 6. Analyze with AI
+        // 8. Analyze with AI
         String diagnosis;
         try {
             diagnosis = aiService.analyzeLog(logs);
@@ -83,15 +107,15 @@ public class LogIngestionController {
                     .body(Map.of("error", "AI analysis failed. Try again."));
         }
 
-        // 7. Determine severity and title
+        // 9. Determine severity and title
         String severity = aiService.determineSeverity(logs);
         String title = aiService.extractTitle(logs);
 
-        // 8. Increment daily counter
+        // 10. Increment daily counter
         user.setDailyAnalysesCount(user.getDailyAnalysesCount() + 1);
         userRepository.save(user);
 
-        // 9. Save to history
+        // 11. Save to history with sentAt
         AnalysisHistory history = AnalysisHistory.builder()
                 .userId(user.getId())
                 .ipAddress(request.getRemoteAddr())
@@ -99,20 +123,21 @@ public class LogIngestionController {
                 .diagnosis(diagnosis)
                 .severity(severity)
                 .title(title)
+                .sentAt(sentAt)
                 .build();
         analysisHistoryRepository.save(history);
 
-        // 10. Broadcast via WebSocket
+        // 12. Broadcast via WebSocket
         Long userId = user.getId();
         webSocketService.broadcastDiagnosis(userId, diagnosis, severity, title);
 
-        // 11. If critical — send alert
+        // 13. If critical — send alert
         if ("critical".equals(severity)) {
             webSocketService.broadcastCriticalAlert(userId, title,
                     "Critical error detected in your production system. Check your dashboard immediately.");
         }
 
-        // 12. Return diagnosis with usage info
+        // 14. Return diagnosis with usage info
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "diagnosis", diagnosis,

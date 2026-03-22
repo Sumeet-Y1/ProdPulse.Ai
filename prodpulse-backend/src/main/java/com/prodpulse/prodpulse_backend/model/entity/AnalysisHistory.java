@@ -39,6 +39,9 @@ public class AnalysisHistory {
     @Column(name = "title", length = 255)
     private String title;
 
+    @Column(name = "sent_at", length = 50)
+    private String sentAt; // SDK server timestamp for deduplication
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
