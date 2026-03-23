@@ -19,7 +19,7 @@ public class EmailService {
 
         helper.setTo(toEmail);
         helper.setSubject("ProdPulse.AI — Verify your email");
-        helper.setFrom("noreply@prodpulse.ai");
+        helper.setFrom("noreply.prodpulse@gmail.com");
         helper.setText(buildOtpTemplate(otp), true);
 
         mailSender.send(message);
@@ -111,7 +111,7 @@ public class EmailService {
 
         helper.setTo(toEmail);
         helper.setSubject("ProdPulse.AI — Reset your password");
-        helper.setFrom("noreply@prodpulse.ai");
+        helper.setFrom("noreply.prodpulse@gmail.com");
         helper.setText(buildForgotPasswordTemplate(otp), true);
 
         mailSender.send(message);
