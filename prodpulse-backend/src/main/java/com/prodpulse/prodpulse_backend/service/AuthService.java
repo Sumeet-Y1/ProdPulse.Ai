@@ -44,7 +44,7 @@ public class AuthService {
         try {
             emailService.sendOtpEmail(request.getEmail(), otp);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send OTP email. Try again.");
+            throw new RuntimeException("Failed to send OTP email. Try again." + e.getMessage());
         }
 
         return "OTP sent to " + request.getEmail();
