@@ -7,12 +7,14 @@ import com.prodpulse.prodpulse_backend.model.dto.ResetPasswordRequest;
 import com.prodpulse.prodpulse_backend.model.entity.User;
 import com.prodpulse.prodpulse_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Random;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -24,7 +26,13 @@ public class AuthService {
 
     public String register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            User existing = userRepository.findByEmail(request.getEmail()).get();
+            if (!existing.isEnabled()) {
+                // Clean up stuck unverified user so they can re-register
+                userRepository.delete(existing);
+            } else {
+                throw new RuntimeException("Email already registered");
+            }
         }
 
         String otp = generateOtp();
@@ -44,7 +52,9 @@ public class AuthService {
         try {
             emailService.sendOtpEmail(request.getEmail(), otp);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send OTP email. Try again." + e.getMessage());
+            log.error("Failed to send OTP email to {}: {}", request.getEmail(), e.getMessage());
+            userRepository.delete(user); // rollback — don't leave dead user in DB
+            throw new RuntimeException("Failed to send OTP email. Try again.");
         }
 
         return "OTP sent to " + request.getEmail();
@@ -106,6 +116,7 @@ public class AuthService {
         try {
             emailService.sendOtpEmail(email, otp);
         } catch (Exception e) {
+            log.error("Failed to resend OTP to {}: {}", email, e.getMessage());
             throw new RuntimeException("Failed to resend OTP. Try again.");
         }
 
@@ -128,6 +139,7 @@ public class AuthService {
         try {
             emailService.sendForgotPasswordEmail(user.getEmail(), otp);
         } catch (Exception e) {
+            log.error("Failed to send forgot password email to {}: {}", email, e.getMessage());
             throw new RuntimeException("Failed to send reset email. Try again.");
         }
 
