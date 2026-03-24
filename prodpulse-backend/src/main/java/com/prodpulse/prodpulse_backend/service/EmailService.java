@@ -1,53 +1,82 @@
 package com.prodpulse.prodpulse_backend.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import sendinblue.ApiClient;
-import sendinblue.Configuration;
-import sendinblue.auth.ApiKeyAuth;
-import sibApi.TransactionalEmailsApi;
-import sibModel.SendSmtpEmail;
-import sibModel.SendSmtpEmailSender;
-import sibModel.SendSmtpEmailTo;
 
-import java.util.List;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
+@Slf4j
 @Service
 public class EmailService {
 
     @Value("${BREVO_API_KEY}")
     private String apiKey;
 
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+
     public void sendOtpEmail(String toEmail, String otp) throws Exception {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        ApiKeyAuth apiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("api-key");
-        apiKeyAuth.setApiKey(apiKey);
+        String body = """
+            {
+                "sender": { "name": "ProdPulse.AI", "email": "noreply.prodpulse@gmail.com" },
+                "to": [{ "email": "%s" }],
+                "subject": "ProdPulse.AI — Verify your email",
+                "htmlContent": %s
+            }
+            """.formatted(toEmail, toJson(buildOtpTemplate(otp)));
 
-        TransactionalEmailsApi apiInstance = new TransactionalEmailsApi();
-        SendSmtpEmail email = new SendSmtpEmail();
-
-        email.setSubject("ProdPulse.AI — Verify your email");
-        email.setSender(new SendSmtpEmailSender().name("ProdPulse.AI").email("noreply.prodpulse@gmail.com"));
-        email.setTo(List.of(new SendSmtpEmailTo().email(toEmail)));
-        email.setHtmlContent(buildOtpTemplate(otp));
-
-        apiInstance.sendTransacEmail(email);
+        sendRequest(body);
     }
 
     public void sendForgotPasswordEmail(String toEmail, String otp) throws Exception {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        ApiKeyAuth apiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("api-key");
-        apiKeyAuth.setApiKey(apiKey);
+        String body = """
+            {
+                "sender": { "name": "ProdPulse.AI", "email": "noreply.prodpulse@gmail.com" },
+                "to": [{ "email": "%s" }],
+                "subject": "ProdPulse.AI — Reset your password",
+                "htmlContent": %s
+            }
+            """.formatted(toEmail, toJson(buildForgotPasswordTemplate(otp)));
 
-        TransactionalEmailsApi apiInstance = new TransactionalEmailsApi();
-        SendSmtpEmail email = new SendSmtpEmail();
+        sendRequest(body);
+    }
 
-        email.setSubject("ProdPulse.AI — Reset your password");
-        email.setSender(new SendSmtpEmailSender().name("ProdPulse.AI").email("noreply.prodpulse@gmail.com"));
-        email.setTo(List.of(new SendSmtpEmailTo().email(toEmail)));
-        email.setHtmlContent(buildForgotPasswordTemplate(otp));
+    private void sendRequest(String jsonBody) throws Exception {
+        log.info("Sending email via Brevo HTTP API, API key present: {}", apiKey != null && !apiKey.isEmpty());
 
-        apiInstance.sendTransacEmail(email);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                .header("Content-Type", "application/json")
+                .header("api-key", apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            log.info("Brevo response status: {}", response.statusCode());
+            log.info("Brevo response body: {}", response.body());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("Brevo API error: " + response.statusCode() + " - " + response.body());
+            }
+        } catch (Exception e) {
+            log.error("Exception while calling Brevo API: ", e);
+            throw e;
+        }
+    }
+
+    private String toJson(String html) {
+        return "\"" + html
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t")
+                + "\"";
     }
 
     private String buildOtpTemplate(String otp) {
