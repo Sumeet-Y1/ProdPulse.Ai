@@ -27,7 +27,7 @@ public class EmailService {
         SendSmtpEmail email = new SendSmtpEmail();
 
         email.setSubject("ProdPulse.AI — Verify your email");
-        email.setSender(new SendSmtpEmailSender().name("ProdPulse.AI").email("your_brevo_gmail@gmail.com"));
+        email.setSender(new SendSmtpEmailSender().name("ProdPulse.AI").email("noreply.prodpulse@gmail.com"));
         email.setTo(List.of(new SendSmtpEmailTo().email(toEmail)));
         email.setHtmlContent(buildOtpTemplate(otp));
 
@@ -43,7 +43,7 @@ public class EmailService {
         SendSmtpEmail email = new SendSmtpEmail();
 
         email.setSubject("ProdPulse.AI — Reset your password");
-        email.setSender(new SendSmtpEmailSender().name("ProdPulse.AI").email("your_brevo_gmail@gmail.com"));
+        email.setSender(new SendSmtpEmailSender().name("ProdPulse.AI").email("noreply.prodpulse@gmail.com"));
         email.setTo(List.of(new SendSmtpEmailTo().email(toEmail)));
         email.setHtmlContent(buildForgotPasswordTemplate(otp));
 
