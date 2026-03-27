@@ -9,6 +9,7 @@ import com.prodpulse.prodpulse_backend.model.entity.User;
 import com.prodpulse.prodpulse_backend.repository.UserRepository;
 import com.prodpulse.prodpulse_backend.service.AuthService;
 import com.prodpulse.prodpulse_backend.service.JwtService;
+import com.prodpulse.prodpulse_backend.service.PolicyService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class AuthController {
     private final AuthService authService;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final PolicyService policyService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
@@ -35,9 +37,17 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<AuthResponse> verifyOtp(
             @RequestParam String email,
-            @RequestParam String otp) {
+            @RequestParam String otp,
+            @RequestParam(required = false, defaultValue = "v1.0") String policyVersion) {
+
         String token = authService.verifyOtp(email, otp);
-        return ResponseEntity.ok(new AuthResponse(token, null, email));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        policyService.saveAcceptanceForUser(user.getId().toString(), email, policyVersion);
+
+        return ResponseEntity.ok(new AuthResponse(token, user.getName(), email));
     }
 
     @PostMapping("/login")
@@ -93,7 +103,6 @@ public class AuthController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Reset counter if new day
         LocalDateTime now = LocalDateTime.now();
         if (user.getLastResetDate() == null ||
                 user.getLastResetDate().toLocalDate().isBefore(now.toLocalDate())) {

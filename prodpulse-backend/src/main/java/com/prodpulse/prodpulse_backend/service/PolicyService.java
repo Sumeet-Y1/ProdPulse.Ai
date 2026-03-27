@@ -4,6 +4,7 @@ import com.prodpulse.prodpulse_backend.model.dto.PolicyAcceptanceRequest;
 import com.prodpulse.prodpulse_backend.model.entity.PolicyAcceptance;
 import com.prodpulse.prodpulse_backend.repository.PolicyAcceptanceRepository;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -32,6 +33,23 @@ public class PolicyService {
         policy.setUserAgent(userAgent);
 
         return repository.save(policy);
+    }
+
+    // Called after OTP verification — user is fully created at this point
+    public void saveAcceptanceForUser(String userId, String email, String policyVersion) {
+        // Avoid duplicate entries if user re-verifies
+        if (repository.existsByUserIdAndAcceptedTrue(userId)) {
+            return;
+        }
+
+        PolicyAcceptance policy = new PolicyAcceptance();
+        policy.setUserId(userId);
+        policy.setEmail(email);
+        policy.setAccepted(true);
+        policy.setPolicyVersion(policyVersion != null ? policyVersion : "v1.0");
+        policy.setAcceptedAt(LocalDateTime.now());
+
+        repository.save(policy);
     }
 
     public boolean hasAccepted(String userId) {
