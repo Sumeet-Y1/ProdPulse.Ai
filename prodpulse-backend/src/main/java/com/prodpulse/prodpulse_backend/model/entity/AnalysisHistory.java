@@ -42,6 +42,9 @@ public class AnalysisHistory {
     @Column(name = "sent_at", length = 50)
     private String sentAt; // SDK server timestamp for deduplication
 
+    @Column(name = "context_data", columnDefinition = "TEXT")
+    private String contextData; // stores git, system, app, request as JSON
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

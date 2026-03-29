@@ -98,6 +98,16 @@ public class LogIngestionController {
                     .body(Map.of("error", "Logs cannot be empty"));
         }
 
+        // 7b. Extract context
+        String contextData = null;
+        try {
+            Object contextObj = body.get("context");
+            if (contextObj instanceof Map) {
+                contextData = new com.fasterxml.jackson.databind.ObjectMapper()
+                        .writeValueAsString(contextObj);
+            }
+        } catch (Exception ignored) {}
+
         // 8. Analyze with AI
         String diagnosis;
         try {
@@ -115,7 +125,7 @@ public class LogIngestionController {
         user.setDailyAnalysesCount(user.getDailyAnalysesCount() + 1);
         userRepository.save(user);
 
-        // 11. Save to history with sentAt
+        // 11. Save to history with sentAt and contextData
         AnalysisHistory history = AnalysisHistory.builder()
                 .userId(user.getId())
                 .ipAddress(request.getRemoteAddr())
@@ -124,6 +134,7 @@ public class LogIngestionController {
                 .severity(severity)
                 .title(title)
                 .sentAt(sentAt)
+                .contextData(contextData)
                 .build();
         analysisHistoryRepository.save(history);
 
